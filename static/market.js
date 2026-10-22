@@ -16,8 +16,8 @@
       m_sub: "Top 100 companies by market value, from your OpenD connection",
       m_dist: "Today's moves",
       m_dist_sub: "How many of the 100 are up, flat or down",
-      m_cap: "Largest by market value",
-      m_cap_sub: "Top ten, in trillions of dollars",
+      m_news: "Market news",
+      m_news_sub: "Today's headlines, via Yahoo Finance",
       m_screen: "Stocks matching the screen",
       m_screen_sub: "Up 1–10% today · market value over $50B · volume over 2M shares",
       m_screen_note: "A screen is a filter, not a recommendation. These rows are the stocks that matched the rules above, nothing more — TradeRevive AI does not tell you what to buy.",
@@ -42,8 +42,8 @@
       m_sub: "100 syarikat teratas mengikut nilai pasaran, daripada sambungan OpenD anda",
       m_dist: "Pergerakan hari ini",
       m_dist_sub: "Berapa daripada 100 itu naik, mendatar atau turun",
-      m_cap: "Terbesar mengikut nilai pasaran",
-      m_cap_sub: "Sepuluh teratas, dalam trilion dolar",
+      m_news: "Berita pasaran",
+      m_news_sub: "Tajuk hari ini, melalui Yahoo Finance",
       m_screen: "Saham yang memenuhi saringan",
       m_screen_sub: "Naik 1–10% hari ini · nilai pasaran melebihi $50B · volum melebihi 2J saham",
       m_screen_note: "Saringan ialah penapis, bukan cadangan. Baris ini ialah saham yang memenuhi peraturan di atas, tidak lebih — TradeRevive AI tidak memberitahu anda apa yang perlu dibeli.",
@@ -68,7 +68,6 @@
   var dir = "desc";
   var query = "";
   var distChart = null;
-  var capChart = null;
 
   function t(key) { return (S[lang] && S[lang][key]) || S.en[key] || key; }
   function $(id) { return document.getElementById(id); }
@@ -142,42 +141,6 @@
         scales: {
           x: { grid: { display: false }, ticks: { color: "#64748b", font: { size: 11 } } },
           y: { beginAtZero: true, grid: { color: "#eef2f6" }, ticks: { color: "#94a3b8", precision: 0, font: { size: 11 } } }
-        }
-      }
-    });
-  }
-
-  function drawCap(rows) {
-    var canvas = $("chart-cap");
-    if (!canvas || !window.Chart) return;
-    var top = rows.filter(function (r) { return r.market_cap; })
-      .sort(function (a, b) { return b.market_cap - a.market_cap; })
-      .slice(0, 10)
-      .reverse();
-
-    if (capChart) { capChart.destroy(); capChart = null; }
-    capChart = new Chart(canvas.getContext("2d"), {
-      type: "bar",
-      data: {
-        labels: top.map(function (r) { return shortCode(r.symbol); }),
-        datasets: [{
-          data: top.map(function (r) { return +(r.market_cap / 1e12).toFixed(2); }),
-          backgroundColor: "rgba(13, 148, 136, .85)",
-          borderRadius: 4,
-          maxBarThickness: 16
-        }]
-      },
-      options: {
-        indexAxis: "y",
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: {
-          label: function (item) { return "$" + item.parsed.x.toFixed(2) + "T"; }
-        } } },
-        scales: {
-          x: { beginAtZero: true, grid: { color: "#eef2f6" }, ticks: { color: "#94a3b8", font: { size: 11 }, callback: function (v) { return "$" + v + "T"; } } },
-          y: { grid: { display: false }, ticks: { color: "#475569", font: { size: 11, weight: "600" } } }
         }
       }
     });
@@ -274,6 +237,64 @@
     return copy;
   }
 
+  // ------------------------------------------------------------------- news
+
+  function ago(iso) {
+    if (!iso) return "";
+    var then = new Date(iso).getTime();
+    if (isNaN(then)) return "";
+    var mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+    if (mins < 60) return mins + "m ago";
+    var hours = Math.round(mins / 60);
+    if (hours < 24) return hours + "h ago";
+    return Math.round(hours / 24) + "d ago";
+  }
+
+  function renderNews(data) {
+    var list = $("news-list");
+    var note = $("news-note");
+    if (!list) return;
+    list.innerHTML = "";
+
+    var items = (data && data.items) || [];
+    if (!items.length) {
+      list.innerHTML = '<li class="news-empty">' +
+        (data && data.error ? escapeHtml(data.error) : "No headlines came back.") + "</li>";
+      note.hidden = true;
+      return;
+    }
+
+    items.forEach(function (item) {
+      var li = document.createElement("li");
+      li.className = "news-item";
+      li.innerHTML =
+        '<a href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener">' +
+        escapeHtml(item.title) + "</a>" +
+        '<div class="news-meta">' + escapeHtml(item.publisher || "") +
+        (item.published ? " · " + escapeHtml(ago(item.published)) : "") + "</div>";
+      list.appendChild(li);
+    });
+
+    if (data.error) {
+      note.hidden = false;
+      note.textContent = data.error + " (showing the last headlines fetched)";
+    } else if (data.age_seconds !== null && data.age_seconds !== undefined) {
+      note.hidden = false;
+      note.textContent = "updated " + Math.round(data.age_seconds) + "s ago · " +
+        (data.symbols || []).join(", ");
+    }
+  }
+
+  function loadNews() {
+    fetch("/api/public/news?limit=6", { headers: { Accept: "application/json" } })
+      .then(function (r) {
+        if (!r.ok) throw new Error("news " + r.status);
+        return r.json();
+      })
+      .then(renderNews)
+      .catch(function (e) { renderNews({ items: [], error: e.message }); });
+  }
+
   // ------------------------------------------------------------------ render
 
   function render() {
@@ -296,9 +317,14 @@
     if (!ready) {
       note.hidden = false;
       note.textContent = data.error || "The first sweep of the market is running — about 20 seconds.";
+      // Say it inside the chart card too, rather than leaving a blank box.
+      var distTitle = document.querySelector(".chart-box");
+      if (distTitle) distTitle.style.display = "none";
       return;
     }
     note.hidden = true;
+    var box = document.querySelector(".chart-box");
+    if (box) box.style.display = "";
 
     var rows = data.rows || [];
     var b = data.breadth || {};
@@ -311,7 +337,6 @@
       (b.unpriced ? '<span class="chip">' + count(b.unpriced) + " —</span>" : "");
 
     drawDistribution(rows);
-    drawCap(rows);
     renderScreen(rows);
 
     var filtered = query
@@ -351,8 +376,14 @@
         if (!response.ok) throw new Error("Market request failed (" + response.status + ").");
         return response.json();
       })
-      .then(function (payload) { data = payload; error = null; render(); })
-      .catch(function (err) { data = null; error = err.message; render(); });
+      .then(function (payload) { data = payload; error = null; render(); retryIfWarming(); })
+      .catch(function (err) { data = null; error = err.message; render(); retryIfWarming(); });
+  }
+
+  // The first sweep of the US market takes about 20 seconds. Polling every 30s means the
+  // page can sit on "loading" long after the data is there, so ask again sooner.
+  function retryIfWarming() {
+    if (!data || !data.ready) setTimeout(load, 3000);
   }
 
   function applyLanguage(next) {
@@ -397,6 +428,8 @@
     });
 
     load();
+    loadNews();
     setInterval(load, 30000);
+    setInterval(loadNews, 600000);   // Yahoo's feed changes slower than the market does
   });
 })();

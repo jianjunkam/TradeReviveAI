@@ -52,10 +52,11 @@
         <p class="sub" data-i18n="m_dist_sub">How many of the 100 are up, flat or down</p>
         <div class="chart-box"><canvas id="chart-dist" aria-label="Distribution of daily change"></canvas></div>
       </div>
-      <div class="card">
-        <h2 data-i18n="m_cap">Largest by market value</h2>
-        <p class="sub" data-i18n="m_cap_sub">Top ten, in trillions of dollars</p>
-        <div class="chart-box"><canvas id="chart-cap" aria-label="Largest companies by market value"></canvas></div>
+      <div class="card news-card">
+        <h2 data-i18n="m_news">Market news</h2>
+        <p class="sub" id="news-sub" data-i18n="m_news_sub">Today's headlines, via Yahoo Finance</p>
+        <ul class="news-list" id="news-list"><li class="news-empty">Loading headlines…</li></ul>
+        <p class="live-note" id="news-note" hidden></p>
       </div>
     </section>
 

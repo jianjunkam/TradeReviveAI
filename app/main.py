@@ -29,6 +29,7 @@ from app.broker.moomoo import MoomooBroker
 from app.config import Settings, get_settings
 from app.db import make_engine
 from app.market import MarketCache
+from app.news import NewsFeed
 from app.paper import PaperStore
 from app.permissions import guard, public
 from app.repositories import SqlTenancy
@@ -124,6 +125,13 @@ def create_app(
     )
     if resolved.public_dashboard and market is None:
         app.state.market.start()
+
+    # Headlines are fetched server-side and cached: Yahoo sends no CORS headers, so the
+    # browser could not call it directly.
+    app.state.news = NewsFeed(
+        symbols=resolved.news_symbols,
+        refresh_seconds=resolved.news_refresh_seconds,
+    )
 
     # Simulated money, real prices. The file lives on this machine so a restart keeps the
     # demo account; nothing here can reach a real trading account.

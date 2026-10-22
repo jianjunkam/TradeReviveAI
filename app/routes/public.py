@@ -84,3 +84,17 @@ def us_market(
 
     cache = request.app.state.market
     return cache.query(q=q, sort=sort, descending=descending, page=page, size=size)
+
+
+@router.get("/news")
+@public
+def market_news(request: Request, limit: int = 8) -> dict:
+    """Today's market headlines, from Yahoo Finance's RSS feed.
+
+    Cached for ten minutes: it is somebody else's server, and headlines do not change
+    faster than that.
+    """
+    settings = request.app.state.settings
+    if not settings.public_dashboard:
+        raise HTTPException(status_code=404, detail="Not found.")
+    return request.app.state.news.get(limit=limit)

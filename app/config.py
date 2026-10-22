@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     market_refresh_seconds: int = 30
     #: How many stocks the dashboard lists, ranked by market value.
     market_top_n: int = 100
+    #: Headlines for the dashboard, from Yahoo Finance's RSS feed (no key, no CORS).
+    news_symbols: str = "AAPL,MSFT,NVDA,AMZN,TSLA"
+    news_refresh_seconds: int = 600
+
     #: Paper-trading account: simulated cash, real prices, stored on this machine.
     paper_starting_cash: float = 100000.0
     paper_store_path: str = "data/paper.json"

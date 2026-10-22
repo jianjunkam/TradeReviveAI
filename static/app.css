@@ -310,6 +310,25 @@ a.btn.secondary, a.btn.secondary:visited { color: var(--ink); }
 .pager-label { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .pager .live-note { margin: 0 0 0 auto; }
 
+/* ----------------------------------------------------------------- news */
+
+.news-card { display: flex; flex-direction: column; }
+.news-list {
+  list-style: none; margin: 10px 0 0; padding: 0 6px 0 0;
+  max-height: 244px; overflow-y: auto; scrollbar-width: thin;
+}
+.news-list::-webkit-scrollbar { width: 6px; }
+.news-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+.news-item { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+.news-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.news-item a {
+  display: block; font-size: 13.5px; font-weight: 600; line-height: 1.4;
+  color: var(--ink); text-decoration: none;
+}
+.news-item a:hover { color: var(--accent); text-decoration: underline; }
+.news-meta { color: var(--muted); font-size: 11.5px; margin-top: 3px; }
+.news-empty { color: var(--muted); font-size: 13px; padding: 10px 0; list-style: none; }
+
 /* ------------------------------------------------------------ papertrade */
 
 .alert-sim {
