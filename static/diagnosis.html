@@ -126,9 +126,10 @@
           "I explain and coach. I do not tell you what to buy.",
         errorMessage: "The assistant is unreachable right now.",
         starterPrompts: [
-          "Explain max drawdown in plain English",
-          "How do I size a position to survive one bad trade?",
-          "Compare AAPL and MSFT today"
+          "What does max drawdown tell me about my trading?",
+          "How do I size a position so one loss cannot ruin the month?",
+          "Compare AAPL and MSFT today by price, volume and market cap.",
+          "I keep cutting losses within two days. What should I change?"
         ],
         textInput: { placeholder: "Ask about a ticker, a metric or a habit…" },
         footer: { text: "Not financial advice.", company: "TradeRevive AI", companyLink: "/" }
@@ -178,7 +179,20 @@
     })();
   }
 
+  // The badge should describe the widget, not whether the window happens to be open.
+  function probeStatus() {
+    let tries = 0;
+    (function attempt() {
+      const host = document.querySelector("flowise-chatbot");
+      const root = host && host.shadowRoot;
+      if (root && root.querySelector("button")) return markConnected();
+      if (tries++ < RETRY_LIMIT) return setTimeout(attempt, 150);
+      markUnavailable();
+    })();
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    probeStatus();
     // Not auto-opened: a 560px window in the corner covers the cards underneath it, and
     // an obscured page reads as broken. The launcher is visible, and every card opens it.
     document.getElementById("open-chat").addEventListener("click", function () { openChat(); });
