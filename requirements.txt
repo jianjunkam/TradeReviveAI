@@ -1,0 +1,17 @@
+# TradeRevive AI — install: pip install -r requirements.txt
+# Pinned to what was installed and tested on Python 3.12.7.
+fastapi==0.159.1
+uvicorn[standard]==0.54.0
+pydantic-settings==2.16.1
+# Tests: pytest runs the suite; httpx2 is what Starlette 1.9's TestClient requires.
+pytest==9.1.1
+httpx2==2.16.0
+# M1 sign-in: Google OAuth, signed magic-link tokens, TOTP, form parsing.
+authlib==1.9.1
+itsdangerous==2.2.0
+pyotp==2.10.0
+python-multipart==0.0.32
+# M3 data model: PostgreSQL, ORM and migrations.
+SQLAlchemy==2.1.6
+psycopg[binary]==3.3.6
+alembic==1.20.1

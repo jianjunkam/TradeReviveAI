@@ -1,0 +1,27 @@
+# Local development database. Production uses the hosting platform's managed Postgres.
+#   docker compose up -d
+#   docker compose down          # keep the data
+#   docker compose down -v       # wipe it
+services:
+  db:
+    image: postgres:16
+    container_name: traderevive-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-traderevive}
+      # Dev-only default. Set POSTGRES_PASSWORD in the environment to override it;
+      # no real secret belongs in this file (AGENTS.md).
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-traderevive_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-traderevive}
+    ports:
+      # 5433 on the host so it cannot collide with a local PostgreSQL on 5432.
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-traderevive} -d ${POSTGRES_DB:-traderevive}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
