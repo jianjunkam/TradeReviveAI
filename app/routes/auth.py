@@ -71,30 +71,118 @@ def _safe_log(event: str, user: User) -> None:
 # -------------------------------------------------------------------------- pages
 
 
-_SIGN_IN_PAGE = """<!doctype html>
+_SIGN_IN_PAGE = _SIGN_IN_TEMPLATE = """<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Sign in · TradeRevive AI</title></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · TradeRevive AI</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
 <body>
-  <h1>Sign in</h1>
-  <p>We email you a link. No password to remember.</p>
-  <form method="post" action="/auth/magic-link">
-    <label for="email">Email</label>
-    <input id="email" name="email" type="email" required autocomplete="email">
-    <button type="submit">Email me a link</button>
-  </form>
-  <p><a href="/auth/google">Continue with Google</a></p>
+<div class="auth">
+  <div class="auth-card">
+    <div class="brand">
+      <span class="mark">TR</span>
+      <span>TradeRevive AI<small>Trading recovery platform</small></span>
+    </div>
+
+    <ol class="steps" aria-label="Sign-in progress">
+      <li class="step active" id="step-email">1 · Email</li>
+      <li class="step" id="step-code">2 · Passcode</li>
+    </ol>
+
+    <div class="alert" id="alert" role="alert" hidden></div>
+
+    <!-- Step 1: the address -->
+    <form id="email-form" novalidate>
+      <h1>Sign in</h1>
+      <p class="lede">We email you a one-time link. No password to remember, nothing to leak.</p>
+      <div class="field">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" required autocomplete="email"
+               placeholder="you@example.com" autofocus>
+      </div>
+      <button class="btn" type="submit" id="email-submit">Continue</button>
+      <div class="divider">or</div>
+      <a class="btn secondary" href="/auth/google">Continue with Google</a>
+      <a class="muted-link" href="/demo">See the demo dashboard &rarr;</a>
+    </form>
+
+    <!-- Step 2: the passcode, shown as soon as the address is submitted -->
+    <section id="code-panel" hidden>
+      <h1>Enter your passcode</h1>
+      <p class="lede" id="code-lede">Six digits from your authenticator app.</p>
+
+      <div class="sent" id="sent-note" hidden>
+        <strong>Check your inbox.</strong> Open the sign-in link we sent to
+        <span id="sent-address" class="mono"></span>, then enter the code below.
+      </div>
+
+      <form id="code-form" novalidate>
+        <div class="field">
+          <label for="code">Six-digit code</label>
+          <input id="code" name="code" class="code-input" inputmode="numeric"
+                 autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}"
+                 required autofocus>
+        </div>
+        <button class="btn" type="submit" id="code-submit">Verify and sign in</button>
+      </form>
+
+      <button class="linkish" type="button" id="back">&larr; Use a different email</button>
+    </section>
+
+    <p class="dev-banner" id="dev-banner" hidden>
+      <strong>Development mode.</strong> No email leaves this machine — the sign-in link is
+      printed in the terminal running the app, and this page skips it so you can go straight
+      to the passcode. Production sends the email and requires the link.
+      <span id="setup-line" hidden><br>
+        <strong>Setup key:</strong> <code id="setup-key" class="mono"></code> — add it to your
+        authenticator app (or compute the code with pyotp) to get the six digits.
+      </span>
+    </p>
+  </div>
+</div>
+<script>__CONFIG__</script>
+<script src="/static/signin.js"></script>
 </body>
 </html>
 """
 
 
+def _sign_in_page(*, started: bool, dev: bool, setup_key: str | None = None) -> str:
+    """Render the page with the state the server already knows.
+
+    `started` means a session exists and only the passcode is outstanding (the user has
+    just followed the emailed link in another tab). `dev` is the development-mode banner;
+    `setup_key` is the TOTP secret, and it is only ever passed in development, where the
+    emailed link — and therefore the enrolment page — is skipped.
+    """
+    config = "window.__signin = { started: %s, dev: %s, setupKey: %r };" % (
+        "true" if started else "false",
+        "true" if dev else "false",
+        setup_key or "",
+    )
+    return _SIGN_IN_TEMPLATE.replace("__CONFIG__", config)
+
+
 @router.get("/sign-in", response_class=HTMLResponse)
 @public
 def sign_in_page(request: Request) -> Response:
+    dev = request.app.state.settings.environment == "development"
     user = sessions.current_user(request)
-    if user is not None and not sessions.needs_two_factor(request, user):
-        return RedirectResponse("/app", status_code=303)
-    return HTMLResponse(_SIGN_IN_PAGE)
+    if user is not None:
+        if not sessions.needs_two_factor(request, user):
+            return RedirectResponse("/app", status_code=303)
+        # A session exists and only the passcode is outstanding: show step 2 straight away.
+        # In development the enrolment page was skipped with the link, so the setup key is
+        # shown in the banner — otherwise there would be no way to produce a valid code.
+        return HTMLResponse(
+            _sign_in_page(
+                started=True, dev=dev, setup_key=user.totp_secret if dev else None
+            )
+        )
+    return HTMLResponse(_sign_in_page(started=False, dev=dev))
 
 
 @router.post("/auth/register", status_code=201)
@@ -162,7 +250,25 @@ def request_magic_link(request: Request, email: str = Form(...)) -> Response:
         text=f"Sign in to TradeRevive AI: {link}\nThe link works once, for {minutes} minutes.",
     )
     _safe_log("sign_in_link_issued", user)
-    return JSONResponse({"status": "sent"}, status_code=202)
+
+    # Development has no email transport, so the page would be stuck at step 1. Open a
+    # half-session here (the passcode is still required) and let the page skip to step 2.
+    # Outside development this never runs: the emailed link is the credential.
+    dev_mode = request.app.state.settings.environment == "development"
+    if dev_mode:
+        if not user.email_verified:
+            user.email_verified = True
+            store.save_user(user)
+        sessions.start(request, user)
+
+    return JSONResponse(
+        {
+            "status": "sent",
+            "dev_mode": dev_mode,
+            "next": "/auth/2fa" if dev_mode else None,
+        },
+        status_code=202,
+    )
 
 
 @router.get("/auth/magic/{token}")
@@ -261,16 +367,33 @@ def two_factor_page(request: Request) -> Response:
     uri = html.escape(twofa.provisioning_uri(secret, email=user.email), quote=True)
     page = f"""<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Two-factor · TradeRevive AI</title></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Two-factor · TradeRevive AI</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
 <body>
-  <h1>One more step</h1>
-  <p>Add this account to your authenticator app, then enter the six-digit code.</p>
-  <p><code>{uri}</code></p>
-  <form method="post" action="/auth/2fa">
-    <label for="code">Code</label>
-    <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" required>
-    <button type="submit">Verify</button>
-  </form>
+<div class="auth">
+  <div class="auth-card">
+    <div class="brand">
+      <span class="mark">TR</span>
+      <span>TradeRevive AI<small>Trading recovery platform</small></span>
+    </div>
+    <h1>One more step</h1>
+    <p class="lede">Add this account to your authenticator app, then enter the six-digit code.</p>
+    <p class="sub">Manual setup key</p>
+    <code class="code">{uri}</code>
+    <form method="post" action="/auth/2fa" style="margin-top:16px">
+      <div class="field">
+        <label for="code">Six-digit code</label>
+        <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code"
+               required placeholder="123456">
+      </div>
+      <button class="btn" type="submit">Verify</button>
+    </form>
+  </div>
+</div>
 </body>
 </html>
 """

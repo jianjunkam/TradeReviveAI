@@ -11,27 +11,40 @@ M3's Postgres store) can replace one piece without touching the route code.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
+from decimal import Decimal
 from typing import Callable
 
 from fastapi import Depends, FastAPI
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth.email import EmailSender, build_email_sender
 from app.auth.google import GoogleProvider, build_google_provider
 from app.auth.pg_store import PostgresAuthStore
 from app.auth.store import AuthStore, InMemoryAuthStore
+from app.broker.base import Broker
+from app.broker.moomoo import MoomooBroker
 from app.config import Settings, get_settings
 from app.db import make_engine
+from app.market import MarketCache
+from app.paper import PaperStore
 from app.permissions import guard, public
 from app.repositories import SqlTenancy
 from app.routes import admin as admin_routes
 from app.routes import auth as auth_routes
+from app.routes import broker as broker_routes
 from app.routes import pages as page_routes
+from app.routes import journal as journal_routes
+from app.routes import paper as paper_routes
+from app.routes import public as public_routes
 from app.routes import trades as trade_routes
 from app.tenancy import TenancyStore
 
 SESSION_COOKIE = "tr_session"
 SESSION_MAX_AGE = 8 * 60 * 60  # one working day
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
 def create_app(
@@ -42,6 +55,9 @@ def create_app(
     google: GoogleProvider | None = None,
     clock: Callable[[], datetime] | None = None,
     tenancy: TenancyStore | None = None,
+    broker: Broker | None = None,
+    market: MarketCache | None = None,
+    paper: PaperStore | None = None,
 ) -> FastAPI:
     """Build the app. Settings and dependencies are injectable; production uses the defaults."""
     resolved = settings if settings is not None else get_settings()
@@ -84,9 +100,37 @@ def create_app(
     )
     app.state.google = google if google is not None else build_google_provider(resolved)
     app.state.clock = clock or (lambda: datetime.now(timezone.utc))
+    # The broker only ever reads: construction opens no connection, and every call either
+    # returns what OpenD reported or raises BrokerUnavailable.
+    app.state.broker = (
+        broker
+        if broker is not None
+        else MoomooBroker(
+            resolved.opend_host,
+            resolved.opend_port,
+            market=resolved.opend_market,
+            trade_market=resolved.opend_trade_market,
+            trade_env=resolved.opend_trade_env,
+        )
+    )
 
-    # Secure cookies are on everywhere but local development, where the app is served
-    # over plain http://127.0.0.1 and a Secure cookie would never be sent back.
+    # One sweep of the whole US market, refreshed on a timer and served from memory:
+    # 7,000 snapshots per page view is not possible, and sorting across the market needs
+    # every row. The thread only starts when the public dashboard can actually use it.
+    app.state.market = market if market is not None else MarketCache(
+        app.state.broker,
+        refresh_seconds=resolved.market_refresh_seconds,
+        top_n=resolved.market_top_n,
+    )
+    if resolved.public_dashboard and market is None:
+        app.state.market.start()
+
+    # Simulated money, real prices. The file lives on this machine so a restart keeps the
+    # demo account; nothing here can reach a real trading account.
+    app.state.paper = paper if paper is not None else PaperStore(
+        resolved.paper_store_path,
+        starting_cash=Decimal(str(resolved.paper_starting_cash)),
+    )
     app.add_middleware(
         SessionMiddleware,
         secret_key=resolved.app_secret.get_secret_value(),
@@ -102,11 +146,54 @@ def create_app(
         """Liveness only: the process is up. It deliberately checks no dependency."""
         return {"status": "ok"}
 
+    # Assets are public by nature (they are what the browser needs before sign-in).
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+    def _dashboard_page(name: str) -> Response:
+        """The public pages exist only when the dashboard is switched on."""
+        if not resolved.public_dashboard:
+            return RedirectResponse("/sign-in", status_code=303)
+        return FileResponse(STATIC_DIR / name)
+
+    @app.get("/demo", dependencies=[Depends(guard)])
+    @public
+    def demo() -> Response:
+        """A design preview with sample data: no account, no sign-in, no model call."""
+        return FileResponse(STATIC_DIR / "journal.html")
+
+    @app.get("/", dependencies=[Depends(guard)])
+    @public
+    def home() -> Response:
+        """The front door: the market dashboard."""
+        return _dashboard_page("market.html")
+
+    @app.get("/journal", dependencies=[Depends(guard)])
+    @public
+    def journal() -> Response:
+        """Net P&L, win rate, equity curve, mistake breakdown."""
+        return _dashboard_page("journal.html")
+
+    @app.get("/papertrade", dependencies=[Depends(guard)])
+    @public
+    def papertrade() -> Response:
+        """Simulated trading at real prices. No order ever leaves this machine."""
+        return _dashboard_page("papertrade.html")
+
+    @app.get("/diagnosis", dependencies=[Depends(guard)])
+    @public
+    def diagnosis() -> Response:
+        """The Flowise assistant. The page it serves holds only a public chatflow id."""
+        return _dashboard_page("diagnosis.html")
+
     # Every router runs the guard, so no route reaches its handler unpermissioned.
     app.include_router(auth_routes.router, dependencies=[Depends(guard)])
     app.include_router(page_routes.router, dependencies=[Depends(guard)])
     app.include_router(admin_routes.router, dependencies=[Depends(guard)])
     app.include_router(trade_routes.router, dependencies=[Depends(guard)])
+    app.include_router(broker_routes.router, dependencies=[Depends(guard)])
+    app.include_router(public_routes.router, dependencies=[Depends(guard)])
+    app.include_router(paper_routes.router, dependencies=[Depends(guard)])
+    app.include_router(journal_routes.router, dependencies=[Depends(guard)])
     return app
 
 

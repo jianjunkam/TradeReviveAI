@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradeRevive AI — Papertrade</title>
+<meta name="description" content="Simulated trading at real US market prices. No real order is placed.">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="mark">TR</span>
+      <span>TradeRevive AI<small>Trading recovery platform</small></span>
+    </div>
+
+    <nav class="nav" aria-label="Main">
+      <a href="/"><span class="dot"></span><span class="label">Dashboard</span></a>
+      <a href="/journal"><span class="dot"></span><span class="label">Trade journal</span></a>
+      <a href="/papertrade" class="active"><span class="dot"></span><span class="label">Papertrade</span></a>
+      <a href="/diagnosis"><span class="dot"></span><span class="label">Diagnosis</span></a>
+    </nav>
+
+    <footer>Simulated account · no real orders</footer>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Papertrade</h1>
+        <p>Simulated money, real US market prices from moomoo OpenD</p>
+      </div>
+      <div class="controls">
+        <span class="tag" id="paper-conn" style="background:#f1f5f9;color:#475569">checking…</span>
+        <button type="button" class="ghost" id="paper-reset">Reset account</button>
+      </div>
+    </div>
+
+    <div class="alert-sim">
+      <strong>Simulated account.</strong> Orders are filled at the broker's last price and
+      recorded on this machine. <strong>Nothing is sent to your broker</strong> — no real money,
+      no real position, no real exposure.
+    </div>
+
+    <section class="grid kpis" id="summary" aria-label="Account summary">
+      <div class="card kpi">
+        <div class="label">Cash</div>
+        <div class="value num" id="k-cash">—</div>
+        <div class="delta">Available to buy</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Positions</div>
+        <div class="value num" id="k-mv">—</div>
+        <div class="delta">Market value</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Equity</div>
+        <div class="value num" id="k-eq">—</div>
+        <div class="delta">Cash + positions</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Total return</div>
+        <div class="value num" id="k-ret">—</div>
+        <div class="delta" id="k-ret-sub">Since the account opened</div>
+      </div>
+    </section>
+
+    <section class="grid split" style="margin-top:16px">
+      <div class="card">
+        <h2>Order ticket</h2>
+        <p class="sub">Fills at the last traded price reported by OpenD</p>
+
+        <form id="order-form" autocomplete="off">
+          <div class="field">
+            <label for="symbol">US stock</label>
+            <input id="symbol" name="symbol" list="symbols" placeholder="US.AAPL" required>
+            <datalist id="symbols"></datalist>
+          </div>
+
+          <div class="quote-line" id="quote-line">Enter a symbol to see its price</div>
+
+          <div class="field">
+            <label for="qty">Shares</label>
+            <input id="qty" name="qty" type="number" min="1" step="1" value="1" required>
+          </div>
+
+          <div class="estimate" id="estimate"></div>
+
+          <div class="actions">
+            <button type="submit" class="btn" id="buy-btn">Buy</button>
+            <button type="submit" class="btn danger" id="sell-btn">Sell</button>
+          </div>
+          <div class="alert" id="order-alert" role="alert" hidden></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Positions</h2>
+        <p class="sub" id="positions-sub">Marked at the latest price</p>
+        <div class="table-scroll">
+          <table class="table" id="positions-table">
+            <thead>
+              <tr>
+                <th>Symbol</th><th class="num">Qty</th><th class="num">Avg cost</th>
+                <th class="num">Last</th><th class="num">Value</th><th class="num">P&amp;L</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="6" class="muted-cell">No open positions.</td></tr></tbody>
+          </table>
+        </div>
+        <p class="live-note" id="unrealised"></p>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <h2>Recent fills</h2>
+      <p class="sub">Every simulated order, newest first</p>
+      <div class="table-scroll">
+        <table class="table" id="fills-table">
+          <thead>
+            <tr>
+              <th>When</th><th>Side</th><th>Symbol</th>
+              <th class="num">Qty</th><th class="num">Price</th>
+              <th class="num">Cash after</th><th class="num">Realised</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="7" class="muted-cell">No orders yet. Buy something to begin.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="disclaimer">
+      Paper trading is a training tool. Fills ignore slippage, commission, taxes and liquidity,
+      so results here are optimistic compared with a real account. It is not financial advice,
+      and it is not a prediction.
+    </p>
+  </main>
+</div>
+
+<script src="/static/papertrade.js"></script>
+</body>
+</html>

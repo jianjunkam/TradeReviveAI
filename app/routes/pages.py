@@ -28,14 +28,68 @@ def private_page(request: Request) -> Response:
         return RedirectResponse("/auth/2fa", status_code=303)
 
     language = user.language_preference
+
+    # Checking the broker is a separate click: it opens a socket to OpenD, and a page load
+    # should not stall (or fail) because a local gateway is not running.
+    if request.query_params.get("check") == "1":
+        broker_state = request.app.state.broker.status()
+        if broker_state.connected:
+            broker_block = (
+                "<p class='sub'>Connected to moomoo OpenD at "
+                f"{html.escape(broker_state.host)}:{broker_state.port}. "
+                "Quotes and positions come straight from your broker.</p>"
+                "<span class='tag'>live</span>"
+            )
+        else:
+            broker_block = (
+                f"<p class='sub'>{html.escape(broker_state.reason or 'Not connected.')}</p>"
+                "<span class='tag' style='background:#fee2e2;color:#991b1b'>not connected</span>"
+            )
+    else:
+        broker_block = (
+            "<p class='sub'>Not checked yet. Checking contacts your broker through the "
+            "moomoo OpenD gateway on this machine.</p>"
+            "<a class='btn secondary' style='width:auto;display:inline-flex;padding:8px 14px' "
+            "href='/app?check=1'>Check connection</a>"
+        )
+
     page = f"""<!doctype html>
 <html lang="{html.escape(language)}">
-<head><meta charset="utf-8"><title>{t(language, "workspace")} · TradeRevive AI</title></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{t(language, "workspace")} · TradeRevive AI</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
 <body>
-  <h1>{t(language, "workspace")}</h1>
-  <p>{t(language, "signed_in_as")} {html.escape(user.email)} ({html.escape(user.role)}).</p>
-  <p data-tenant="{html.escape(user.tenant_id)}">{t(language, "tenant")}: {html.escape(user.tenant_id)}</p>
-  <form method="post" action="/auth/sign-out"><button type="submit">{t(language, "sign_out")}</button></form>
+<div class="main" style="max-width:780px;margin:0 auto">
+  <div class="topbar">
+    <div>
+      <h1>{t(language, "workspace")}</h1>
+      <p>{t(language, "signed_in_as")} {html.escape(user.email)} ({html.escape(user.role)})</p>
+    </div>
+    <form method="post" action="/auth/sign-out">
+      <button class="ghost" type="submit">{t(language, "sign_out")}</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>{t(language, "tenant")}</h2>
+    <p class="sub">Your data lives in this workspace and nowhere else.</p>
+    <span class="tenant-chip" data-tenant="{html.escape(user.tenant_id)}">{html.escape(user.tenant_id)}</span>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Broker connection</h2>
+    {broker_block}
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Design preview</h2>
+    <p class="sub">The dashboard layout, filled with sample data.</p>
+    <a class="muted-link" style="text-align:left;margin:0" href="/demo">Open the demo dashboard &rarr;</a>
+  </div>
+</div>
 </body>
 </html>
 """

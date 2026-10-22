@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradeRevive AI — Diagnosis</title>
+<meta name="description" content="Ask the diagnosis assistant about a stock, a metric or a trading habit.">
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  .prompt-grid {
+    display: grid; gap: 10px; margin-top: 6px;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  }
+  .prompt {
+    text-align: left; padding: 12px 13px; border-radius: 10px; cursor: pointer;
+    border: 1px solid var(--line); background: #fff; font: inherit;
+  }
+  .prompt:hover { border-color: var(--accent); background: #f0fdfa; }
+  .prompt strong { display: block; font-size: 13px; margin-bottom: 4px; }
+  .prompt span { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="mark">TR</span>
+      <span>TradeRevive AI<small>Trading recovery platform</small></span>
+    </div>
+
+    <nav class="nav" aria-label="Main">
+      <a href="/"><span class="dot"></span><span class="label">Dashboard</span></a>
+      <a href="/journal"><span class="dot"></span><span class="label">Trade journal</span></a>
+      <a href="/papertrade"><span class="dot"></span><span class="label">Papertrade</span></a>
+      <a href="/diagnosis" class="active"><span class="dot"></span><span class="label">Diagnosis</span></a>
+    </nav>
+
+    <footer>Assistant hosted on Flowise</footer>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Diagnosis</h1>
+        <p>Ask about a ticker, a metric, or a habit you keep repeating</p>
+      </div>
+      <div class="controls">
+        <span class="tag" id="chat-status" style="background:#f1f5f9;color:#475569">connecting…</span>
+        <button type="button" class="ghost" id="open-chat">Open the chat</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <h2>What the assistant can answer</h2>
+      <p class="sub">
+        It runs on a separate Flowise chatflow with market-data tools. It explains and coaches.
+        It never tells you what to buy, and it cannot see your account.
+      </p>
+
+      <div class="prompt-grid" id="prompts">
+        <button type="button" class="prompt" data-q="What does max drawdown tell me about my trading?">
+          <strong>Explain a metric</strong>
+          <span>“What does max drawdown tell me about my trading?”</span>
+        </button>
+        <button type="button" class="prompt" data-q="How do I size a position so one loss cannot ruin the month?">
+          <strong>Fix position sizing</strong>
+          <span>“How do I size a position so one loss cannot ruin the month?”</span>
+        </button>
+        <button type="button" class="prompt" data-q="Compare AAPL and MSFT today by price, volume and market cap.">
+          <strong>Check a ticker</strong>
+          <span>“Compare AAPL and MSFT today by price, volume and market cap.”</span>
+        </button>
+        <button type="button" class="prompt" data-q="I keep cutting losses within two days. What should I change?">
+          <strong>Work on a habit</strong>
+          <span>“I keep cutting losses within two days. What should I change?”</span>
+        </button>
+      </div>
+
+      <p class="live-note" id="chat-note">
+        Pick a question to open the chat with it, or press “Open the chat”. The assistant is the
+        green bubble in the corner.
+      </p>
+    </section>
+
+    <p class="disclaimer">
+      Answers come from a separate assistant running on Flowise, not from your account data.
+      It can be wrong, it is not financial advice, and it never places a trade. Anything it says
+      about your own numbers should be checked on the Trade journal page.
+    </p>
+  </main>
+</div>
+
+<script type="module">
+  import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js";
+
+  const STATUS = document.getElementById("chat-status");
+  const RETRY_LIMIT = 40;                 // ~6s: the module is fetched from a CDN
+  const FALLBACK =
+    "https://flowise.bdctraining.cloud/chatbot/f2ac3baa-63d0-4ce2-ba69-07d8fa7b66c8";
+
+  // The launcher and window live in the widget's shadow root: nothing on this page can
+  // style them. Size and colour are theme settings, not CSS.
+  Chatbot.init({
+    chatflowid: "f2ac3baa-63d0-4ce2-ba69-07d8fa7b66c8",
+    apiHost: "https://flowise.bdctraining.cloud",
+    theme: {
+      button: {
+        backgroundColor: "#0d9488",
+        iconColor: "#ffffff",
+        size: "large",
+        right: 24,
+        bottom: 24,
+        autoWindowOpen: { autoOpen: false, autoOpenOnMobile: false }
+      },
+      tooltip: { showTooltip: false },
+      chatWindow: {
+        showTitle: true,
+        title: "TradeRevive AI · Diagnosis",
+        titleBackgroundColor: "#0d9488",
+        titleTextColor: "#ffffff",
+        width: 560,
+        height: 720,
+        welcomeMessage:
+          "Ask me about a US ticker, a risk metric, or a habit you want to break.\n\n" +
+          "I explain and coach. I do not tell you what to buy.",
+        errorMessage: "The assistant is unreachable right now.",
+        starterPrompts: [
+          "Explain max drawdown in plain English",
+          "How do I size a position to survive one bad trade?",
+          "Compare AAPL and MSFT today"
+        ],
+        textInput: { placeholder: "Ask about a ticker, a metric or a habit…" },
+        footer: { text: "Not financial advice.", company: "TradeRevive AI", companyLink: "/" }
+      }
+    }
+  });
+
+  function markConnected() {
+    STATUS.textContent = "connected";
+    STATUS.style.cssText = "background:#ecfdf5;color:#047857";
+  }
+
+  function markUnavailable() {
+    STATUS.textContent = "unavailable";
+    STATUS.style.cssText = "background:#fef2f2;color:#991b1b";
+    document.getElementById("chat-note").innerHTML =
+      'The chat module did not load. <a href="' + FALLBACK +
+      '" target="_blank" rel="noopener">Open the assistant in a new tab</a>.';
+  }
+
+  // The widget exposes no open API, so drive its own launcher. It is a toggle: clicking
+  // while open closes it, so look for the textarea first.
+  function openChat(question) {
+    let tries = 0;
+    (function attempt() {
+      const host = document.querySelector("flowise-chatbot");
+      const root = host && host.shadowRoot;
+      const launcher = root && root.querySelector("button");
+      if (!launcher) {
+        if (tries++ < RETRY_LIMIT) return setTimeout(attempt, 150);
+        return markUnavailable();
+      }
+      if (!root.querySelector("textarea")) launcher.click();
+      markConnected();
+
+      if (!question) return;
+      setTimeout(function () {
+        // Typing into the box never sends: the widget reads its own state. A starter
+        // prompt goes through its real send handler.
+        const match = Array.prototype.slice
+          .call(root.querySelectorAll("button, div, span"))
+          .filter(function (el) {
+            return el.textContent.trim() === question && el.offsetParent !== null;
+          })[0];
+        if (match) match.click();
+      }, 700);
+    })();
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Not auto-opened: a 560px window in the corner covers the cards underneath it, and
+    // an obscured page reads as broken. The launcher is visible, and every card opens it.
+    document.getElementById("open-chat").addEventListener("click", function () { openChat(); });
+
+    document.querySelectorAll(".prompt").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const question = button.getAttribute("data-q");
+        openChat(window.innerWidth < 760 ? null : question);
+      });
+    });
+  });
+</script>
+</body>
+</html>

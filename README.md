@@ -1,17 +1,189 @@
-# TradeRevive AI: build pack
+# TradeRevive AI
 
-Made with GigaLab Module 8 (SaaS Builder Lab) on 2026-10-22. Stack: confirmed.
+A trading-recovery platform for people who have lost money trading: it shows what the market
+did, what your own trades did, and where the leak is.
 
-`blueprint.json` is the source of truth: every requirement, choice and target as data. The documents in `docs/` explain it, and the tests in the acceptance folder fail until each feature is built.
+Built from the GigaLab blueprint (`blueprint.json`) — FastAPI + PostgreSQL + plain
+HTML/CSS/JS, no build step and no frontend framework.
 
-1. Put these files in an empty folder and start a Git repository there (`git init`).
-2. Copy `.env.example` to `.env` and fill it in. Never commit `.env`.
-3. Open the folder in your coding agent:
-   - Claude Code: run `claude` in the folder. It reads CLAUDE.md (which imports AGENTS.md) and `.claude/settings.json`.
-   - Codex and Cursor read AGENTS.md.
-   - GitHub Copilot reads AGENTS.md and `.github/copilot-instructions.md`.
-   - Gemini CLI reads GEMINI.md, which imports AGENTS.md.
-   - Any other agent: start with “Read AGENTS.md first.” (your choice)
-4. Start with milestone M0 in `docs/BUILD_PLAN.md`: paste its prompt, approve the plan, check the tests.
-5. One milestone per session. Record each one in GigaLab’s Build guide tab.
-6. To change a requirement or the stack: change it in GigaLab, download the pack again, and copy the new `blueprint.json` and `docs/` over the old ones.
+---
+
+## What works today
+
+| Page | What it is | Data source |
+|---|---|---|
+| `/` | **US market** — breadth, two charts, a rules-based screen, all 100 stocks sortable | moomoo OpenD, live |
+| `/journal` | **Trade journal** — net P&L, win rate, profit factor, equity curve, month calendar, mistake rules | computed from papertrades |
+| `/papertrade` | **Simulated trading** — buy/sell US stocks at the broker's real last price | OpenD price, simulated cash |
+| `/diagnosis` | **Assistant** — a Flowise chatflow that explains metrics and market data | external Flowise instance |
+| `/app` | The authenticated workspace (magic link + TOTP) | Postgres |
+
+The demo pages are not hardcoded sample data. Where a number is unknown it shows `—`, never a
+plausible-looking zero.
+
+---
+
+## Quick start
+
+Requires **Python 3.12** and, for the market pages, **moomoo OpenD** running and signed in on
+`127.0.0.1:11111`. Postgres is only needed for `/app` (sign-in).
+
+```bash
+git clone <this repo>
+cd traderevive-ai-build-pack
+
+python -m venv .venv
+source .venv/Scripts/activate      # Windows git-bash; Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+
+cp .env.example .env               # then edit it — see Settings
+```
+
+Start it:
+
+```bash
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+# Windows: ./.venv/Scripts/python.exe -m uvicorn app.main:app --port 8000
+```
+
+Open <http://127.0.0.1:8000>.
+
+### Minimum `.env` for the demo
+
+```
+APP_SECRET=<any long random string>
+ENVIRONMENT=development
+PUBLIC_DASHBOARD=true
+```
+
+### Postgres (only for /app, sign-in)
+
+```bash
+docker compose up -d                # postgres:16 on port 5433
+export DATABASE_URL="postgresql+psycopg://traderevive:traderevive@localhost:5433/traderevive_test"
+alembic upgrade head
+```
+
+Without `DATABASE_URL` the app still starts in development and keeps auth in memory.
+
+### Paper account with history
+
+A new account has no closed trades, so the journal starts empty. Seed it from real historical
+closes:
+
+```bash
+./.venv/Scripts/python.exe scripts/seed_paper.py --per-symbol 6
+```
+
+It resets the paper account first, so it is repeatable. Every fill is priced from an actual
+daily close returned by OpenD.
+
+---
+
+## Settings
+
+All settings come from `.env` (see `.env.example`). The ones that matter:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `APP_SECRET` | — | **Required.** Signs the session cookie and magic links. |
+| `ENVIRONMENT` | `production` | Only `development` relaxes cookies and enables `/docs`. Deliberately safe by default. |
+| `PUBLIC_DASHBOARD` | `false` | Serve market, journal, papertrade and diagnosis without a login. |
+| `DATABASE_URL` | — | Required outside development. |
+| `MARKET_TOP_N` | `100` | How many stocks the dashboard lists, ranked by market value. |
+| `MARKET_REFRESH_SECONDS` | `30` | How often the market is re-read. |
+| `PAPER_STARTING_CASH` | `100000` | Simulated starting cash. |
+| `OPEND_HOST` / `OPEND_PORT` | `127.0.0.1` / `11111` | The OpenD gateway. |
+| `OPEND_TRADE_MARKET` | `US` | Which account's positions to read. |
+
+---
+
+## Before hosting this publicly
+
+`PUBLIC_DASHBOARD=true` exposes, to **anyone who can reach the port**:
+
+- live quotes and the market table — fine, that is public market data;
+- **your broker account's open positions**, returned by `/api/public/market`;
+- the papertrading account — simulated, harmless.
+
+If OpenD is not running on the host, the positions list is empty and nothing private leaks.
+If it is running with your signed-in account, **your positions are public**. For a public
+deployment either set `PUBLIC_DASHBOARD=false` (then `/` redirects to `/sign-in`) or run
+without OpenD.
+
+There is no user authentication on the four demo pages by design; the authenticated product
+lives at `/app`.
+
+---
+
+## Tests
+
+```bash
+./.venv/Scripts/python.exe -m pytest -q
+```
+
+Everything passes except 32 placeholders for future milestones (`F3`–`F6` and the quality
+targets), which are marked `Not written yet:` — the M0 gate test asserts exactly that, so the
+suite is honest rather than green by omission.
+
+No test touches your broker or the network: the suite uses a fake broker and an unstarted
+market cache.
+
+---
+
+## Layout
+
+```
+app/
+  main.py            create_app: routes, middleware, dependency wiring
+  config.py          Settings (pydantic-settings, .env)
+  permissions.py     permission matrix, @permit/@public, deny-by-default guard
+  market.py          whole-market cache: sweep, rank, paginate
+  paper.py           paper trading engine (Decimal money, JSON store)
+  broker/            moomoo OpenD adapter + fake for tests
+  routes/            auth, pages, admin, trades, broker, public, paper, journal
+static/              market, journal, papertrade, diagnosis pages + their JS
+migrations/          Alembic
+scripts/             seed_paper.py, check_opend.py
+tests/               unit + acceptance
+docs/                the build pack (AGENTS.md, BUILD_PLAN.md, STACK.md, ...)
+```
+
+## Known limits
+
+- Sign-in is magic link + TOTP only. Email delivery is a console sender in development (the
+  link prints to the terminal); no SMTP provider is wired.
+- The journal's analytics come from the paper account. Reading a real broker's trade history
+  is not built.
+- Milestones F3–F6 (analytics engine, mistake detection, AI reports, quality targets) are
+  still placeholders.
+- Paper fills ignore slippage, commission, tax and liquidity, so results are optimistic by
+  construction — and the page says so.
+- Nothing here can place a real order: no endpoint reaches a trading context.
+
+---
+
+## About the build pack
+
+This repository started as a GigaLab Module 8 (SaaS Builder Lab) pack, 2026-10-22. The
+original notes are kept because `blueprint.json` is still the source of truth for
+requirements and the acceptance tests.
+
+> `blueprint.json` is the source of truth: every requirement, choice and target as data. The
+> documents in `docs/` explain it, and the tests in the acceptance folder fail until each
+> feature is built.
+>
+> 1. Put these files in an empty folder and start a Git repository there (`git init`).
+> 2. Copy `.env.example` to `.env` and fill it in. Never commit `.env`.
+> 3. Open the folder in your coding agent (Claude Code reads `CLAUDE.md`, Codex/Cursor read
+>    `AGENTS.md`, Gemini CLI reads `GEMINI.md`).
+> 4. Start with milestone M0 in `docs/BUILD_PLAN.md`.
+> 5. One milestone per session. Record each in GigaLab's Build guide tab.
+> 6. To change a requirement or the stack: change it in GigaLab, download the pack again, and
+>    copy the new `blueprint.json` and `docs/` over the old ones.
+
+## Licence / attribution
+
+Coursework project. Market data © moomoo / Futu, served through your own OpenD gateway. The
+diagnosis assistant runs on a separate Flowise instance. Not financial advice.
+

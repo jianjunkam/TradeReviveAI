@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradeRevive AI — US market</title>
+<meta name="description" content="Live US market analysis from moomoo OpenD: today's moves, the largest companies, and a transparent stock screen.">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="mark">TR</span>
+      <span>TradeRevive AI<small data-i18n="brand_sub">Trading recovery platform</small></span>
+    </div>
+
+    <nav class="nav" aria-label="Main">
+      <a href="/" class="active"><span class="dot"></span><span class="label" data-i18n="nav_dashboard">Dashboard</span></a>
+      <a href="/journal"><span class="dot"></span><span class="label" data-i18n="nav_journal">Trade journal</span></a>
+      <a href="/papertrade"><span class="dot"></span><span class="label" data-i18n="nav_papertrade">Papertrade</span></a>
+      <a href="/diagnosis"><span class="dot"></span><span class="label" data-i18n="nav_diagnosis">Diagnosis</span></a>
+    </nav>
+
+    <footer data-i18n="m_side_footer">Live market data · moomoo OpenD</footer>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 data-i18n="m_title">US market</h1>
+        <p id="m-sub" data-i18n="m_sub">Top 100 companies by market value, from your OpenD connection</p>
+      </div>
+      <div class="controls">
+        <span class="tag" id="m-status" style="background:#f1f5f9;color:#475569">connecting…</span>
+        <div class="seg" role="group" aria-label="Language">
+          <button type="button" id="lang-en" aria-pressed="true">EN</button>
+          <button type="button" id="lang-ms" aria-pressed="false">BM</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="breadth" id="m-breadth"></div>
+      <p class="live-note" id="m-note" hidden></p>
+    </section>
+
+    <section class="grid split" style="margin-top:16px">
+      <div class="card">
+        <h2 data-i18n="m_dist">Today's moves</h2>
+        <p class="sub" data-i18n="m_dist_sub">How many of the 100 are up, flat or down</p>
+        <div class="chart-box"><canvas id="chart-dist" aria-label="Distribution of daily change"></canvas></div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="m_cap">Largest by market value</h2>
+        <p class="sub" data-i18n="m_cap_sub">Top ten, in trillions of dollars</p>
+        <div class="chart-box"><canvas id="chart-cap" aria-label="Largest companies by market value"></canvas></div>
+      </div>
+    </section>
+
+    <section class="card screen-card" style="margin-top:16px">
+      <div class="live-head">
+        <div>
+          <h2 data-i18n="m_screen">Stocks matching the screen</h2>
+          <p class="sub" data-i18n="m_screen_sub">Up 1–10% today · market value over $50B · volume over 2M shares</p>
+        </div>
+        <span class="tag">data, not advice</span>
+      </div>
+      <div class="table-scroll">
+        <table class="table" id="screen-table">
+          <thead>
+            <tr>
+              <th data-i18n="m_th_symbol">Symbol</th>
+              <th data-i18n="m_th_name">Name</th>
+              <th class="num" data-i18n="m_th_last">Last</th>
+              <th class="num" data-i18n="m_th_change">Change</th>
+              <th class="num" data-i18n="m_th_volume">Volume</th>
+              <th class="num" data-i18n="m_th_cap">Market cap</th>
+            </tr>
+          </thead>
+          <tbody id="screen-body"></tbody>
+        </table>
+      </div>
+      <p class="live-note" data-i18n="m_screen_note">
+        A screen is a filter, not a recommendation. These rows are the stocks that matched the
+        rules above, nothing more — TradeRevive AI does not tell you what to buy.
+      </p>
+    </section>
+
+    <section class="card market-card" style="margin-top:16px">
+      <div class="live-head">
+        <div>
+          <h2 data-i18n="m_table">All 100, sortable</h2>
+          <p class="sub" id="m-table-sub" data-i18n="m_table_sub">Click a column to sort, or search by code or name</p>
+        </div>
+        <input id="us-search" class="us-search" type="search" autocomplete="off"
+               placeholder="Search code or name" aria-label="Search the list">
+      </div>
+      <div class="table-scroll">
+        <table class="table us-table" id="us-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="symbol" data-i18n="m_th_symbol">Symbol</th>
+              <th class="sortable" data-sort="name" data-i18n="m_th_name">Name</th>
+              <th class="sortable num" data-sort="last_price" data-i18n="m_th_last">Last</th>
+              <th class="sortable num" data-sort="change_rate" data-i18n="m_th_change">Change</th>
+              <th class="sortable num" data-sort="volume" data-i18n="m_th_volume">Volume</th>
+              <th class="sortable num" data-sort="market_cap" data-i18n="m_th_cap">Market cap</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <span id="us-page" class="pager-label"></span>
+        <span class="live-note" id="us-meta"></span>
+      </div>
+    </section>
+
+    <p class="disclaimer" data-i18n="m_disclaimer">
+      Market data is provided by moomoo OpenD for information only. It is not financial advice,
+      not a prediction, and not a recommendation. Verify every number with your broker before acting.
+    </p>
+  </main>
+</div>
+
+<script src="/static/vendor/chart.umd.min.js"></script>
+<script src="/static/market.js"></script>
+</body>
+</html>

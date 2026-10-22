@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradeRevive AI — Trade journal</title>
+<meta name="description" content="Trade journal: net P&L, win rate, equity curve and mistake breakdown.">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="mark">TR</span>
+      <span>TradeRevive AI<small data-i18n="brand_sub">Trading recovery platform</small></span>
+    </div>
+
+    <nav class="nav" aria-label="Main">
+      <a href="/"><span class="dot"></span><span class="label" data-i18n="nav_dashboard">Dashboard</span></a>
+      <a href="/journal" class="active"><span class="dot"></span><span class="label" data-i18n="nav_journal">Trade journal</span></a>
+      <a href="/papertrade"><span class="dot"></span><span class="label" data-i18n="nav_papertrade">Papertrade</span></a>
+      <a href="/diagnosis"><span class="dot"></span><span class="label" data-i18n="nav_diagnosis">Diagnosis</span></a>
+    </nav>
+
+    <footer data-i18n="side_footer">Design preview · sample data</footer>
+  </aside>
+
+  <main class="main" id="dashboard">
+    <div class="topbar">
+      <div>
+        <h1>Trade journal</h1>
+        <p id="journal-sub">Computed from your papertrades · simulated money, real prices</p>
+      </div>
+      <div class="controls">
+        <span class="tag" id="journal-source-tag" style="background:#fef3c7;color:#92400e">paper account</span>
+        <button type="button" class="ghost" id="journal-refresh">Refresh</button>
+      </div>
+    </div>
+
+    <!-- KPI cards -->
+    <section class="grid kpis" aria-label="Key metrics">
+      <div class="card kpi">
+        <div class="label">Net P&amp;L</div>
+        <div class="value num" id="kpi-net">—</div>
+        <div class="delta" id="kpi-net-sub">Since the account opened</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Win rate</div>
+        <div class="value num" id="kpi-win">—</div>
+        <div class="delta" id="kpi-win-sub">Closed trades only</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Profit factor</div>
+        <div class="value num" id="kpi-pf">—</div>
+        <div class="delta" id="kpi-pf-sub">Gross wins ÷ gross losses</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">Max drawdown</div>
+        <div class="value num" id="kpi-dd">—</div>
+        <div class="delta" id="kpi-dd-sub">Peak to trough on realised equity</div>
+      </div>
+    </section>
+
+    <section class="grid split" style="margin-top:16px">
+      <div class="card">
+        <h2>Equity curve</h2>
+        <p class="sub">Account value after each closed trade, ending at today's mark</p>
+        <div class="chart-wrap tall"><canvas id="equity" aria-label="Equity curve" role="img"></canvas></div>
+      </div>
+
+      <div class="card">
+        <h2>Mistake breakdown</h2>
+        <p class="sub">Deterministic rules over your fills, ranked by what they cost</p>
+        <div class="mistakes" id="mistakes"></div>
+      </div>
+    </section>
+
+    <section class="grid split-wide" style="margin-top:16px">
+      <div class="card">
+        <div class="cal-head">
+          <div>
+            <h2>Daily P&amp;L calendar</h2>
+            <p class="sub" id="calendar-sub">Realised profit and loss per day</p>
+          </div>
+          <div class="cal-nav" role="group" aria-label="Calendar month">
+            <button type="button" class="ghost" id="cal-prev" aria-label="Previous month">&lsaquo;</button>
+            <span id="cal-label">—</span>
+            <button type="button" class="ghost" id="cal-next" aria-label="Next month">&rsaquo;</button>
+          </div>
+        </div>
+        <div class="heatmap" id="heatmap" role="img" aria-label="Daily profit and loss calendar"></div>
+        <div class="legend">
+          <span class="box" style="background:#6ee7b7"></span><span>win</span>
+          <span class="box" style="background:#f8fafc;border:1px solid #e2e8f0"></span><span>no trades</span>
+          <span class="box" style="background:#fca5a5"></span><span>loss</span>
+        </div>
+      </div>
+
+      <div class="card diagnosis">
+        <h2>What the numbers say</h2>
+        <p class="sub">Plain arithmetic over your own fills — no model, no prediction</p>
+        <div class="tagline" id="diagnosis-tags"></div>
+        <p id="diagnosis-body">Loading your papertrades…</p>
+        <h3>This week's drills</h3>
+        <ol class="drills" id="drills"></ol>
+        <div class="disclaimer">
+          Coaching only. This is not financial advice, not a prediction, and never a buy or sell
+          recommendation. Past behaviour does not guarantee future results.
+        </div>
+      </div>
+    </section>
+
+    <p class="disclaimer" id="journal-source">
+      Figures are computed from simulated papertrades filled at real historical prices.
+      They are not a track record.
+    </p>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/vendor/chart.umd.min.js"></script>
+<script src="/static/journal.js"></script>
+</body>
+</html>
