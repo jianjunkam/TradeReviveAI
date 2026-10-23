@@ -47,10 +47,13 @@ class Settings(BaseSettings):
     opend_trade_market: str = "US"
     opend_trade_env: str = "SIMULATE"
 
-    #: Serve the dashboard, live quotes and positions with NO sign-in.
-    #: Off by default: on, anyone who can reach this port sees the account's positions.
-    #: It is meant for local development on 127.0.0.1 — set it in .env, never in production.
-    public_dashboard: bool = False
+    #: Serve the demo pages (market, journal, papertrade, diagnosis) with NO sign-in.
+    #: On by default: these are the product demo, and a host that forgets an env var should
+    #: still show the product rather than a login card nobody can get past.
+    public_dashboard: bool = True
+    #: Include the broker account's OPEN POSITIONS in /api/public/market.
+    #: Off by default: that is the one genuinely private thing the public pages could leak.
+    public_positions: bool = False
     #: MARKET.SYMBOL list shown on the public dashboard.
     demo_watchlist: str = "US.AAPL,HK.00700"
     #: How often the retained list is refreshed. One batched call covers all 100 symbols.

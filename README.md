@@ -104,9 +104,12 @@ A fresh host serves the sign-in page, not the demo, until these are set:
 
 ```bash
 APP_SECRET=<long random string>      # required, or the app will not start
-PUBLIC_DASHBOARD=true                # without this, / redirects to /sign-in
 ENVIRONMENT=development              # or production + DATABASE_URL
 ```
+
+The demo pages are public by default, so `/` is the dashboard with no further setup.
+`PUBLIC_DASHBOARD=false` puts the sign-in page back in front of them; `PUBLIC_POSITIONS=true`
+adds your broker account's open positions to `/api/public/market`.
 
 Two things a hosted copy will not have, by design:
 
@@ -121,16 +124,15 @@ Two things a hosted copy will not have, by design:
 
 ## ⚠️ Before hosting this publicly
 
-`PUBLIC_DASHBOARD=true` exposes, to **anyone who can reach the port**:
+The demo pages are open to anyone who can reach the port. What they contain:
 
 - live quotes and the market table — fine, that is public market data;
-- **your broker account's open positions**, returned by `/api/public/market`;
-- the papertrading account — simulated, harmless.
+- the papertrading account and journal — simulated money, harmless;
+- **your broker account's open positions** — withheld unless `PUBLIC_POSITIONS=true`.
 
-If OpenD is not running on the host, the positions list is empty and nothing private leaks.
-If it is running with your signed-in account, **your positions are public**. For a public
-deployment either set `PUBLIC_DASHBOARD=false` (then `/` redirects to `/sign-in`) or run
-without OpenD.
+Positions default to private: `/api/public/market` returns them only when the operator sets
+`PUBLIC_POSITIONS=true`, so running OpenD on a public host does not publish your book by
+accident. Set `PUBLIC_DASHBOARD=false` to close the demo pages entirely.
 
 There is no user authentication on the four demo pages by design; the authenticated product
 lives at `/app`.

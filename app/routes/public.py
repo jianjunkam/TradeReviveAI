@@ -46,16 +46,22 @@ def public_market(request: Request) -> dict:
 
     positions: list[dict] = []
     positions_error: str | None = None
-    try:
-        positions = [position.as_dict() for position in broker.positions()]
-    except BrokerUnavailable as exc:
-        positions_error = str(exc)
+    # Positions are the one private thing here: a public demo shows the market, not the
+    # account. They are returned only when PUBLIC_POSITIONS is set explicitly.
+    if settings.public_positions:
+        try:
+            positions = [position.as_dict() for position in broker.positions()]
+        except BrokerUnavailable as exc:
+            positions_error = str(exc)
+    else:
+        positions_error = "Positions are private on this deployment."
 
     return {
         "broker": status.as_dict(),
         "quotes": quotes,
         "positions": positions,
         "positions_error": positions_error,
+        "positions_hidden": not settings.public_positions,
         "watchlist": symbols,
     }
 

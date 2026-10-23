@@ -42,6 +42,7 @@ def _client(
     public: bool,
     broker: FakeBroker | None = None,
     watchlist: str = "US.AAPL,HK.00700",
+    positions: bool = False,
 ) -> TestClient:
     broker = broker or FakeBroker(
         quotes={"US.AAPL": _quote("US.AAPL", 343.99, 1.32), "HK.00700": _quote("HK.00700", 380.0, -3.56)},
@@ -62,6 +63,7 @@ def _client(
             app_secret="test-only",
             environment="development",
             public_dashboard=public,
+            public_positions=positions,
             demo_watchlist=watchlist,
         ),
         broker=broker,
@@ -78,7 +80,7 @@ def test_market_route_is_closed_unless_the_flag_is_on():
 
 
 def test_market_route_returns_real_quotes_and_positions():
-    response = _client(public=True).get("/api/public/market")
+    response = _client(public=True, positions=True).get("/api/public/market")
 
     assert response.status_code == 200
     body = response.json()
@@ -185,3 +187,35 @@ def test_diagnosis_page_stays_private_with_the_dashboard_off():
 
     assert response.status_code == 303
     assert response.headers["location"] == "/sign-in"
+
+
+def test_positions_are_withheld_unless_explicitly_enabled():
+    """A public demo shows the market, not the account."""
+    body = _client(public=True).get("/api/public/market").json()
+
+    assert body["positions"] == []
+    assert body["positions_hidden"] is True
+    assert "private" in (body["positions_error"] or "").lower()
+
+
+def test_positions_come_back_when_the_operator_opts_in():
+    body = _client(public=True, positions=True).get("/api/public/market").json()
+
+    assert body["positions_hidden"] is False
+    assert body["positions"][0]["unrealised_pl"] == 439.9
+
+
+def test_the_demo_pages_are_open_by_default():
+    """No env var needed: a fresh host shows the product, not a login card."""
+    broker = FakeBroker()
+    app = create_app(
+        settings=Settings(app_secret="test-only", environment="development"),
+        broker=broker,
+        market=MarketCache(broker),
+    )
+    client = TestClient(app, base_url=BASE, follow_redirects=False)
+
+    assert client.get("/").status_code == 200
+    assert client.get("/journal").status_code == 200
+    assert client.get("/papertrade").status_code == 200
+    assert client.get("/diagnosis").status_code == 200
