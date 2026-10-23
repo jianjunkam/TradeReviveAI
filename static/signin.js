@@ -46,6 +46,11 @@
     codeInput.focus();
   }
 
+  if (cfg.demo) {
+    var demoForm = $("demo-form");
+    if (demoForm) demoForm.hidden = false;
+  }
+
   if (cfg.started) {
     toCodeStep(null, true);
     devBanner.hidden = !cfg.dev;

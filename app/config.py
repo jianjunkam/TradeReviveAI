@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     #: On by default: these are the product demo, and a host that forgets an env var should
     #: still show the product rather than a login card nobody can get past.
     public_dashboard: bool = True
+    #: A "sign in as the demo account" button that skips the email link and 2FA.
+    #: There is no mail provider wired, so without this a hosted copy has no way in.
+    #: Set false to remove the button and keep the email + passcode flow only.
+    demo_sign_in: bool = True
     #: Include the broker account's OPEN POSITIONS in /api/public/market.
     #: Off by default: that is the one genuinely private thing the public pages could leak.
     public_positions: bool = False

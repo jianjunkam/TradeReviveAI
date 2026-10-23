@@ -237,6 +237,9 @@ a.btn, a.btn:visited { color: #fff; }
 a.btn.secondary, a.btn.secondary:visited { color: var(--ink); }
 .divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; margin: 16px 0; }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.muted-note {
+  margin: 8px 0 0; font-size: 12px; color: var(--muted); text-align: center;
+}
 .muted-link { display: block; text-align: center; font-size: 13px; margin-top: 14px; }
 
 /* ------------------------------------------------------------ live market */

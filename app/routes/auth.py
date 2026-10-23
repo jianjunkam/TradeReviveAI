@@ -109,6 +109,12 @@ _SIGN_IN_PAGE = _SIGN_IN_TEMPLATE = """<!doctype html>
       <a class="muted-link" href="/demo">See the demo dashboard &rarr;</a>
     </form>
 
+    <!-- Outside the email form: nested <form> elements are dropped by the HTML parser. -->
+    <form method="post" action="/auth/demo" id="demo-form" hidden>
+      <button class="btn secondary" type="submit">Enter the demo account</button>
+      <p class="muted-note">No email, no passcode — for reviewing this build.</p>
+    </form>
+
     <!-- Step 2: the passcode, shown as soon as the address is submitted -->
     <section id="code-panel" hidden>
       <h1>Enter your passcode</h1>
@@ -150,7 +156,13 @@ _SIGN_IN_PAGE = _SIGN_IN_TEMPLATE = """<!doctype html>
 """
 
 
-def _sign_in_page(*, started: bool, dev: bool, setup_key: str | None = None) -> str:
+def _sign_in_page(
+    *,
+    started: bool,
+    dev: bool,
+    setup_key: str | None = None,
+    demo: bool = False,
+) -> str:
     """Render the page with the state the server already knows.
 
     `started` means a session exists and only the passcode is outstanding (the user has
@@ -158,10 +170,11 @@ def _sign_in_page(*, started: bool, dev: bool, setup_key: str | None = None) -> 
     `setup_key` is the TOTP secret, and it is only ever passed in development, where the
     emailed link — and therefore the enrolment page — is skipped.
     """
-    config = "window.__signin = { started: %s, dev: %s, setupKey: %r };" % (
+    config = "window.__signin = { started: %s, dev: %s, setupKey: %r, demo: %s };" % (
         "true" if started else "false",
         "true" if dev else "false",
         setup_key or "",
+        "true" if demo else "false",
     )
     return _SIGN_IN_TEMPLATE.replace("__CONFIG__", config)
 
@@ -169,7 +182,9 @@ def _sign_in_page(*, started: bool, dev: bool, setup_key: str | None = None) -> 
 @router.get("/sign-in", response_class=HTMLResponse)
 @public
 def sign_in_page(request: Request) -> Response:
-    dev = request.app.state.settings.environment == "development"
+    settings = request.app.state.settings
+    dev = settings.environment == "development"
+    demo = settings.demo_sign_in
     user = sessions.current_user(request)
     if user is not None:
         if not sessions.needs_two_factor(request, user):
@@ -179,10 +194,13 @@ def sign_in_page(request: Request) -> Response:
         # shown in the banner — otherwise there would be no way to produce a valid code.
         return HTMLResponse(
             _sign_in_page(
-                started=True, dev=dev, setup_key=user.totp_secret if dev else None
+                started=True,
+                dev=dev,
+                setup_key=user.totp_secret if dev else None,
+                demo=demo,
             )
         )
-    return HTMLResponse(_sign_in_page(started=False, dev=dev))
+    return HTMLResponse(_sign_in_page(started=False, dev=dev, demo=demo))
 
 
 @router.post("/auth/register", status_code=201)
@@ -219,6 +237,44 @@ def register(request: Request, payload: "RegisterIn") -> dict:
     )
     _safe_log("registered", user)
     return {"user_id": user.id, "tenant_id": user.tenant_id}
+
+
+# ------------------------------------------------------------------- demo sign-in
+
+
+DEMO_EMAIL = "demo@traderevive.local"
+
+
+@router.post("/auth/demo")
+@public
+def demo_sign_in(request: Request) -> Response:
+    """Sign in as the demo account: no email link, no passcode.
+
+    No mail provider is wired, so a hosted copy of this demo cannot send a magic link and
+    therefore cannot be signed into at all. This route is that way in, on purpose — it is
+    switched by DEMO_SIGN_IN and it only ever signs in one fixed local account.
+    """
+    settings = request.app.state.settings
+    if not settings.demo_sign_in:
+        raise HTTPException(status_code=404, detail="Not found.")
+
+    store = _store(request)
+    user = store.get_user_by_email(DEMO_EMAIL)
+    if user is None:
+        user = store.upsert_user(
+            email=DEMO_EMAIL,
+            name="Demo trader",
+            provider="demo",
+            email_verified=True,
+        )
+    elif not user.email_verified:
+        user.email_verified = True
+        store.save_user(user)
+
+    # Both factors are deliberately satisfied: that is the whole point of the button.
+    sessions.start(request, user, mfa_verified=True)
+    _safe_log("demo_sign_in", user)
+    return RedirectResponse("/app", status_code=303)
 
 
 # --------------------------------------------------------------------- magic link
