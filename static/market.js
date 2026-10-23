@@ -25,7 +25,7 @@
       m_table_sub: "Click a column to sort, or search by code or name",
       m_th_symbol: "Symbol", m_th_name: "Name", m_th_last: "Last",
       m_th_change: "Change", m_th_volume: "Volume", m_th_cap: "Market cap",
-      m_disclaimer: "Market data is provided by moomoo OpenD for information only. It is not financial advice, not a prediction, and not a recommendation. Verify every number with your broker before acting.",
+      m_disclaimer: "Market data is provided by Yahoo Finance for information only. It is not financial advice, not a prediction, and not a recommendation. Verify every number with your broker before acting.",
       m_live: "live", m_offline: "offline", m_warming: "loading…",
       m_up: "up", m_down: "down", m_flat: "flat", m_stocks: "stocks",
       m_no_match: "No stock matches that search.",
@@ -37,9 +37,9 @@
       brand_sub: "Platform pemulihan dagangan",
       nav_dashboard: "Papan pemuka", nav_journal: "Jurnal dagangan", nav_papertrade: "Dagangan kertas",
       nav_diagnosis: "Diagnosis",
-      m_side_footer: "Data pasaran langsung · moomoo OpenD",
+      m_side_footer: "Data pasaran langsung · Yahoo Finance",
       m_title: "Pasaran AS",
-      m_sub: "100 syarikat teratas mengikut nilai pasaran, daripada sambungan OpenD anda",
+      m_sub: "Syarikat terbesar mengikut nilai pasaran, daripada Yahoo Finance",
       m_dist: "Pergerakan hari ini",
       m_dist_sub: "Berapa daripada 100 itu naik, mendatar atau turun",
       m_news: "Berita pasaran",
@@ -51,7 +51,7 @@
       m_table_sub: "Klik lajur untuk mengisih, atau cari mengikut kod atau nama",
       m_th_symbol: "Simbol", m_th_name: "Nama", m_th_last: "Terakhir",
       m_th_change: "Perubahan", m_th_volume: "Volum", m_th_cap: "Nilai pasaran",
-      m_disclaimer: "Data pasaran disediakan oleh moomoo OpenD untuk maklumat sahaja. Ia bukan nasihat kewangan, bukan ramalan, dan bukan cadangan. Sahkan setiap nombor dengan broker anda sebelum bertindak.",
+      m_disclaimer: "Data pasaran disediakan oleh Yahoo Finance untuk maklumat sahaja. Ia bukan nasihat kewangan, bukan ramalan, dan bukan cadangan. Sahkan setiap nombor dengan broker anda sebelum bertindak.",
       m_live: "langsung", m_offline: "terputus", m_warming: "memuatkan…",
       m_up: "naik", m_down: "turun", m_flat: "mendatar", m_stocks: "saham",
       m_no_match: "Tiada saham sepadan dengan carian itu.",
@@ -297,6 +297,97 @@
 
   // ------------------------------------------------------------------ render
 
+  function formatPrice(value) {
+    if (value === null || value === undefined) return "—";
+    if (Math.abs(value) >= 1000) return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
+    if (Math.abs(value) >= 1) return value.toFixed(2);
+    return value.toFixed(4);
+  }
+
+  function renderOverview(payload) {
+    var grid = document.getElementById("overview-grid");
+    var note = document.getElementById("overview-note");
+    if (!grid) return;
+
+    var groups = (payload && payload.groups) || [];
+    if (!groups.length) {
+      grid.innerHTML = "";
+      var empty = document.createElement("p");
+      empty.className = "live-note";
+      empty.textContent = "Markets are unavailable right now.";
+      grid.appendChild(empty);
+      return;
+    }
+
+    grid.innerHTML = "";
+    groups.forEach(function (group) {
+      var box = document.createElement("div");
+      box.className = "overview-group";
+
+      var title = document.createElement("h3");
+      title.textContent = group.title;
+      box.appendChild(title);
+
+      if (!group.items || !group.items.length) {
+        var err = document.createElement("p");
+        err.className = "ov-error";
+        err.textContent = group.error || "no data";
+        box.appendChild(err);
+        grid.appendChild(box);
+        return;
+      }
+
+      group.items.forEach(function (item) {
+        var row = document.createElement("div");
+        row.className = "overview-row";
+
+        var label = document.createElement("span");
+        label.className = "ov-label";
+        label.textContent = item.label;
+        label.title = item.symbol;
+
+        var right = document.createElement("span");
+        right.className = "ov-right";
+
+        var price = document.createElement("span");
+        price.className = "ov-price";
+        price.textContent = formatPrice(item.price);
+
+        var change = document.createElement("span");
+        var pct = item.change_pct;
+        change.className = "ov-change " + (pct === null || pct === undefined
+          ? "flat" : pct > 0 ? "up" : pct < 0 ? "down" : "flat");
+        change.textContent = pct === null || pct === undefined
+          ? "" : (pct > 0 ? "+" : "") + pct.toFixed(2) + "%";
+
+        right.appendChild(price);
+        right.appendChild(document.createTextNode(" "));
+        right.appendChild(change);
+        row.appendChild(label);
+        row.appendChild(right);
+        box.appendChild(row);
+      });
+
+      grid.appendChild(box);
+    });
+
+    if (note) note.textContent = payload.source ? "from " + payload.source : "";
+  }
+
+  function loadOverview() {
+    fetch("/api/public/overview", { headers: { Accept: "application/json" } })
+      .then(function (response) {
+        if (!response.ok) throw new Error("overview " + response.status);
+        return response.json();
+      })
+      .then(renderOverview)
+      .catch(function (error) {
+        var grid = document.getElementById("overview-grid");
+        if (grid) grid.innerHTML = '<p class="live-note">Markets are unavailable: ' +
+          error.message + ".</p>";
+      });
+  }
+
   function render() {
     var status = $("m-status");
     var note = $("m-note");
@@ -434,6 +525,8 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    loadOverview();
+    setInterval(loadOverview, 60000);
     applyLanguage("en");
 
     $("lang-en").addEventListener("click", function () { applyLanguage("en"); });

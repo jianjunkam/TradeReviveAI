@@ -104,12 +104,12 @@ def test_one_symbol_without_permission_does_not_blank_the_strip():
 
 
 def test_disconnected_broker_reports_a_reason_and_no_prices():
-    broker = FakeBroker(connected=False, reason="OpenD is not listening on 127.0.0.1:11111")
+    broker = FakeBroker(connected=False, reason="Yahoo Finance did not answer")
 
     body = _client(public=True, broker=broker).get("/api/public/market").json()
 
     assert body["broker"]["connected"] is False
-    assert "11111" in body["broker"]["reason"]
+    assert "Yahoo Finance did not answer" in body["broker"]["reason"]
     # No invented numbers anywhere.
     assert all("last_price" not in q for q in body["quotes"])
     assert body["positions"] == []
@@ -219,3 +219,14 @@ def test_the_demo_pages_are_open_by_default():
     assert client.get("/journal").status_code == 200
     assert client.get("/papertrade").status_code == 200
     assert client.get("/diagnosis").status_code == 200
+
+
+def test_the_overview_route_serves_the_market_groups():
+    response = _client(public=True).get("/api/public/overview")
+
+    assert response.status_code == 200
+    body = response.json()
+    titles = [group["title"] for group in body["groups"]]
+    assert "Indices" in titles
+    assert body["groups"][0]["items"][0]["label"] == "S&P 500"
+    assert body["source"]

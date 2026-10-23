@@ -37,19 +37,8 @@ class Settings(BaseSettings):
     # must not fall back to plain http and console-logged sign-in links.
     environment: str = "production"
 
-    # moomoo OpenD, the local broker gateway. Not a secret: it is a loopback address.
-    # SIMULATE by default so a fresh checkout cannot read a live trading account by accident.
-    opend_host: str = "127.0.0.1"
-    opend_port: int = 11111
-    opend_market: str = "MY"
-    #: The market whose trading account holds the positions. A moomoo ID can see one
-    #: market's quotes and hold no trading account in it, so this is separate.
-    opend_trade_market: str = "US"
-    opend_trade_env: str = "SIMULATE"
+        # SIMULATE by default so a fresh checkout cannot read a live trading account by accident.
 
-    #: Where prices come from: "moomoo" (OpenD, needs a signed-in account on the same
-    #: machine) or "yahoo" (HTTPS, no account — for a server that cannot run OpenD).
-    data_source: str = "moomoo"
     yahoo_timeout: float = 12.0
 
     #: Close the demo pages (market, journal, papertrade, diagnosis) and serve the sign-in

@@ -9,7 +9,7 @@
 # reachable, picks a free port, then serves the app with no login page.
 #
 # Every optional step reports and continues: the demo pages do not need Postgres, and they do
-# not need OpenD either — they say what is missing instead of inventing numbers.
+# need a gateway either — they say what is missing instead of inventing numbers.
 
 set -uo pipefail
 
@@ -100,23 +100,8 @@ else
 fi
 
 # --------------------------------------------------------------------- 4. broker
-step "4. Broker gateway (moomoo OpenD)"
 
-if "$PY" - <<'PYCODE' >/dev/null 2>&1
-import socket, sys
-try:
-    socket.create_connection(("127.0.0.1", 11111), timeout=1.5).close()
-except OSError:
-    sys.exit(1)
-PYCODE
-then
-  ok "OpenD is listening on 127.0.0.1:11111"
-else
-  warn "OpenD is not listening — the market table will say so; news and the journal still work"
-fi
-
-# ------------------------------------------------------------------ 5. free port
-step "5. Port"
+step "4. Port"
 
 port_is_free() {
   "$PY" - "$1" <<'PYCODE' >/dev/null 2>&1
@@ -146,7 +131,7 @@ else
 fi
 
 # ---------------------------------------------------------------------- 6. serve
-step "6. Serving"
+step "5. Serving"
 
 printf '  %sdashboard%s   http://127.0.0.1:%s/\n'   "$DIM" "$RESET" "$PORT"
 printf '  %sjournal%s     http://127.0.0.1:%s/journal\n'   "$DIM" "$RESET" "$PORT"

@@ -187,3 +187,47 @@ def test_the_screener_query_asks_for_market_cap_order(monkeypatch):
     assert captured["body"]["sortField"] == "intradaymarketcap"
     assert captured["body"]["sortType"] == "DESC"
     assert captured["body"]["size"] == 100
+
+
+def test_the_overview_groups_indices_commodities_and_the_rest(monkeypatch):
+    broker = YahooBroker(timeout=5)
+    rows = {
+        "^GSPC": {"symbol": "^GSPC", "regularMarketPrice": 7663.43,
+                  "regularMarketChange": -93.86, "regularMarketChangePercent": -1.2084},
+        "^VIX": {"symbol": "^VIX", "regularMarketPrice": 19.03,
+                 "regularMarketChange": 2.35, "regularMarketChangePercent": 14.09},
+        "CL=F": {"symbol": "CL=F", "regularMarketPrice": 100.14,
+                 "regularMarketChange": 0.67, "regularMarketChangePercent": 0.6736},
+        "BTC-USD": {"symbol": "BTC-USD", "regularMarketPrice": 81700.51,
+                    "regularMarketChange": -1152.3, "regularMarketChangePercent": -1.3912},
+    }
+
+    def batch(codes):
+        return [rows[c] for c in codes if c in rows]
+
+    monkeypatch.setattr(broker, "_batch", batch)
+
+    groups = {g["title"]: g for g in broker.overview()}
+
+    assert {"Indices", "Commodities", "Currencies", "Bonds", "Crypto"} == set(groups)
+    assert groups["Indices"]["items"][0]["label"] == "S&P 500"
+    assert groups["Indices"]["items"][0]["change_pct"] == -1.2084
+    # A group with no live row is empty, not fabricated.
+    assert groups["Bonds"]["items"] == []
+
+
+def test_one_dead_group_does_not_blank_the_panel(monkeypatch):
+    broker = YahooBroker(timeout=5)
+
+    def batch(codes):
+        if codes and codes[0].startswith("^"):
+            raise BrokerUnavailable("Yahoo is down")
+        return [{"symbol": codes[0], "regularMarketPrice": 1.0,
+                 "regularMarketChangePercent": 0.0}]
+
+    monkeypatch.setattr(broker, "_batch", batch)
+    groups = {g["title"]: g for g in broker.overview()}
+
+    assert groups["Indices"]["items"] == []
+    assert groups["Indices"]["error"] == "unavailable right now"
+    assert groups["Commodities"]["items"], "the other groups must still load"

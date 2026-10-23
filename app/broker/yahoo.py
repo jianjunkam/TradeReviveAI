@@ -1,9 +1,9 @@
-"""Yahoo Finance as the market-data source, for servers that cannot run OpenD.
+"""Yahoo Finance — the only market-data source.
 
-Why this exists: OpenD is a closed-source gateway that needs a signed-in moomoo account,
-keeps one session per account, and ties the quote tier to the login IP. A professor's web
-server cannot meet those terms, so the demo needs a source that is reachable over HTTPS
-with no account at all.
+Why this and nothing else: a hosted demo cannot depend on a closed-source gateway that needs
+a signed-in brokerage account on the same machine, keeps one session per account, and ties
+its quote entitlement to the login IP. Yahoo answers over HTTPS with no account at all, which
+is the only kind of dependency a course project can hand to a supervisor.
 
 What it honestly is:
 
@@ -56,6 +56,33 @@ EXCHANGES = {"NMS": "US_NASDAQ", "NYQ": "US_NYSE", "ASE": "US_AMEX", "PCX": "US_
 CRUMB_TTL = 1800.0
 #: How long the universe listing is reused.
 UNIVERSE_TTL = 3600.0
+#: How long the markets overview is reused.
+OVERVIEW_TTL = 60.0
+
+#: The groups shown on the dashboard, using Yahoo's own symbols. Mirrors the sections of
+#: finance.yahoo.com/markets: the numbers a reader checks before anything else.
+OVERVIEW_GROUPS: list[tuple[str, list[tuple[str, str]]]] = [
+    ("Indices", [
+        ("^GSPC", "S&P 500"), ("^DJI", "Dow 30"), ("^IXIC", "Nasdaq"),
+        ("^RUT", "Russell 2000"), ("^VIX", "VIX"),
+    ]),
+    ("Commodities", [
+        ("CL=F", "Crude Oil"), ("BZ=F", "Brent Crude"), ("GC=F", "Gold"),
+        ("SI=F", "Silver"), ("NG=F", "Natural Gas"),
+    ]),
+    ("Currencies", [
+        ("EURUSD=X", "EUR/USD"), ("JPY=X", "USD/JPY"), ("GBP=X", "USD/GBP"),
+        ("CAD=X", "USD/CAD"), ("MXN=X", "USD/MXN"),
+    ]),
+    ("Bonds", [
+        ("^TNX", "10-Yr Bond"), ("^TYX", "30-Yr Bond"), ("^FVX", "5-Yr Bond"),
+        ("^IRX", "13-Wk Bond"),
+    ]),
+    ("Crypto", [
+        ("BTC-USD", "Bitcoin"), ("ETH-USD", "Ethereum"), ("SOL-USD", "Solana"),
+        ("XRP-USD", "XRP"),
+    ]),
+]
 
 
 class YahooBroker:
@@ -74,6 +101,8 @@ class YahooBroker:
         self._universe: list[SymbolInfo] = []
         self._universe_at = 0.0
         self._checked: tuple[float, BrokerStatus] | None = None
+        self._overview: list[dict] = []
+        self._overview_at = 0.0
 
     # --------------------------------------------------------------- plumbing
 
@@ -204,6 +233,57 @@ class YahooBroker:
                 f"Yahoo Finance returned no prices{': ' + error.get('description', '') if error else ''}."
             )
         return result
+
+    def _batch_raw(self, codes: list[str]) -> list[dict]:
+        """Batch by Yahoo's own symbol, for indices, futures and FX that are not US tickers."""
+        rows: list[dict] = []
+        for start in range(0, len(codes), 50):
+            rows.extend(self._batch(codes[start:start + 50]))
+        return rows
+
+    def overview(self) -> list[dict]:
+        """The groups a reader expects from a markets page: indices, commodities, FX, bonds, crypto.
+
+        One batched request per group, cached for a minute. Symbols are Yahoo's own, so
+        `^GSPC` and `CL=F` pass through untouched.
+        """
+        with self._lock:
+            if self._overview and time.time() - self._overview_at < OVERVIEW_TTL:
+                return [dict(group) for group in self._overview]
+
+        groups: list[dict] = []
+        for title, members in OVERVIEW_GROUPS:
+            codes = [code for code, _ in members]
+            try:
+                rows = {row.get("symbol"): row for row in self._batch_raw(codes)}
+            except BrokerUnavailable:
+                # One dead group must not blank the whole panel.
+                groups.append({"title": title, "items": [], "error": "unavailable right now"})
+                continue
+
+            items = []
+            for code, label in members:
+                row = rows.get(code)
+                if not row:
+                    continue
+                price = _number(row.get("regularMarketPrice"))
+                change = _number(row.get("regularMarketChange"))
+                percent = _number(row.get("regularMarketChangePercent"))
+                if price is None:
+                    continue
+                items.append({
+                    "symbol": code,
+                    "label": label,
+                    "price": round(price, 4),
+                    "change": round(change, 4) if change is not None else None,
+                    "change_pct": round(percent, 4) if percent is not None else None,
+                })
+            groups.append({"title": title, "items": items, "error": None})
+
+        with self._lock:
+            self._overview = groups
+            self._overview_at = time.time()
+        return [dict(group) for group in groups]
 
     def quotes(self, symbols: list[str]) -> list[Quote]:
         """Batch prices. Yahoo caps the list length, so it is chunked at 50."""

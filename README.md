@@ -12,9 +12,9 @@ HTML/CSS/JS, no build step and no frontend framework.
 
 | Page | What it is | Data source |
 |---|---|---|
-| `/` | **US market** — breadth, two charts, a rules-based screen, all 100 stocks sortable | moomoo OpenD, live |
+| `/` | **US market** — breadth, markets overview, a rules-based screen, 100 stocks sortable | Yahoo Finance |
 | `/journal` | **Trade journal** — net P&L, win rate, profit factor, equity curve, month calendar, mistake rules | computed from papertrades |
-| `/papertrade` | **Simulated trading** — buy/sell US stocks at the broker's real last price | OpenD price, simulated cash |
+| `/papertrade` | **Simulated trading** — buy/sell US stocks at the latest real price | Yahoo price, simulated cash |
 | `/diagnosis` | **Assistant** — a Flowise chatflow that explains metrics and market data | external Flowise instance |
 | `/app` | The authenticated workspace (magic link + TOTP) | Postgres |
 
@@ -25,7 +25,8 @@ plausible-looking zero.
 
 ## Quick start
 
-Requires **Python 3.12** and, for the market pages, **moomoo OpenD** running and signed in on
+Requires **Python 3.12** and an internet connection — prices come from Yahoo Finance over
+HTTPS, with no account and no gateway. Previously
 `127.0.0.1:11111`. Postgres is only needed for `/app` (sign-in).
 
 ```bash
@@ -46,7 +47,7 @@ Start it:
 ```
 
 The script checks the virtualenv (creating it if needed), makes `.env` if it is missing,
-brings up Postgres when Docker is available, reports whether OpenD is listening, and picks a
+brings up Postgres when Docker is available, checks the price feed, and picks a
 free port — then serves the app with **no login page**. `PORT=8080 ./start.sh` overrides the
 port.
 
@@ -83,7 +84,7 @@ closes:
 ```
 
 It resets the paper account first, so it is repeatable. Every fill is priced from an actual
-daily close returned by OpenD.
+daily close returned by Yahoo Finance.
 
 ---
 
@@ -96,7 +97,6 @@ All settings come from `.env` (see `.env.example`). The ones that matter:
 | `APP_SECRET` | — | **Required.** Signs the session cookie and magic links. |
 | `ENVIRONMENT` | `production` | Only `development` relaxes cookies and enables `/docs`. Deliberately safe by default. |
 | `DEMO_CLOSED` | `false` | Set `true` to close the demo pages and serve the sign-in card. |
-| `DATA_SOURCE` | `moomoo` | `yahoo` serves prices over HTTPS with no OpenD — for a server that cannot run it. |
 | `DEEPSEEK_API_KEY` | — | Key for the journal's AI section. Empty → Flowise fallback → "no model configured". |
 | `REQUIRE_SIGN_IN` | `true` | Require the sign-in flow for `/app`. `false` removes the login page. |
 | `DEMO_SIGN_IN` | `true` | Show the "enter the demo account" button on the sign-in card. |
@@ -105,8 +105,6 @@ All settings come from `.env` (see `.env.example`). The ones that matter:
 | `MARKET_TOP_N` | `100` | How many stocks the dashboard lists, ranked by market value. |
 | `MARKET_REFRESH_SECONDS` | `30` | How often the market is re-read. |
 | `PAPER_STARTING_CASH` | `100000` | Simulated starting cash. |
-| `OPEND_HOST` / `OPEND_PORT` | `127.0.0.1` / `11111` | The OpenD gateway. |
-| `OPEND_TRADE_MARKET` | `US` | Which account's positions to read. |
 
 ---
 
@@ -138,8 +136,10 @@ email never arrives — so the gate moved to an opt-out flag instead.
 
 Two things a hosted copy will not have, by design:
 
-- **No broker.** Without OpenD the market panel says "OpenD is not listening" and the
-  screener has nothing to show. Headlines still load (Yahoo, no broker needed).
+- **No live socket.** Prices arrive over HTTPS, so the header says "Yahoo · may be delayed"
+  rather than "live", and a failed fetch names the feed instead of showing a price.
+- **No brokerage positions.** Yahoo holds no account: `/api/broker/positions` says so, and the
+  paper book is the only portfolio in the product.
 - **No trade history.** `data/paper.json` is gitignored, so a new host has an empty journal.
   `demo/paper_seed.json` is loaded instead on first boot — trades at real historical prices,
   labelled "sample account" in the journal and on the papertrade page. Delete that file to
@@ -156,7 +156,8 @@ The demo pages are open to anyone who can reach the port. What they contain:
 - **your broker account's open positions** — withheld unless `PUBLIC_POSITIONS=true`.
 
 Positions default to private: `/api/public/market` returns them only when the operator sets
-`PUBLIC_POSITIONS=true`, so running OpenD on a public host does not publish your book by
+`PUBLIC_POSITIONS=true`, and Yahoo holds no positions at all, so there is no book to publish
+in any case. Setting it would only matter with a broker that has an account. Previously
 accident. Set `PUBLIC_DASHBOARD=false` to close the demo pages entirely.
 
 There is no user authentication on the four demo pages by design; the authenticated product
@@ -188,11 +189,11 @@ app/
   permissions.py     permission matrix, @permit/@public, deny-by-default guard
   market.py          whole-market cache: sweep, rank, paginate
   paper.py           paper trading engine (Decimal money, JSON store)
-  broker/            moomoo OpenD adapter + fake for tests
+  broker/            Yahoo Finance adapter + fake for tests
   routes/            auth, pages, admin, trades, broker, public, paper, journal
 static/              market, journal, papertrade, diagnosis pages + their JS
 migrations/          Alembic
-scripts/             seed_paper.py, check_opend.py
+scripts/             seed_paper.py
 tests/               unit + acceptance
 docs/                the build pack (AGENTS.md, BUILD_PLAN.md, STACK.md, ...)
 ```
@@ -232,28 +233,25 @@ requirements and the acceptance tests.
 
 ## Licence / attribution
 
-Coursework project. Market data © moomoo / Futu, served through your own OpenD gateway. The
+Coursework project. Market data from Yahoo Finance (unofficial endpoints, may be delayed). The
 diagnosis assistant runs on a separate Flowise instance. Not financial advice.
 
 
-## Market data: two sources, one switch
+## Market data: Yahoo Finance
 
-`DATA_SOURCE=moomoo` reads your own OpenD gateway: real-time, your quotes, one signed-in
-session per account, and the login IP decides the entitlement. `DATA_SOURCE=yahoo` reads
-Yahoo Finance over HTTPS with no account at all, which is what a hosted deployment needs.
+Prices come from Yahoo Finance over HTTPS. There is no gateway to install, no brokerage
+account on the host, and nothing native to compile — which is what makes the project
+deployable by someone else.
 
-| | moomoo / OpenD | Yahoo Finance |
-|---|---|---|
-| Setup | Native SDK, signed-in gateway | None — HTTPS only |
-| Where it runs | Must sit beside the account | Any server |
-| Price delay | Real-time on your tier | Yahoo's own; the page says **"may be delayed"** |
-| Universe | Whole exchange (~13k tickers) | Yahoo screener, top 100 by market cap |
-| Bid / ask | Yes | Yes, when Yahoo publishes them |
-| Broker positions | Yes | None — paper trading keeps its own book |
-| Contract | Vendor API | Unofficial; can change or break without notice |
+| | |
+|---|---|
+| Quotes | `v7/finance/quote`, batched, with a cookie + crumb handshake |
+| Universe | Yahoo's screener, the largest US companies by market cap |
+| Markets page | Indices, commodities, currencies, bonds and crypto (`/api/public/overview`) |
+| Missing change % | Derived from last/prev close, or left `null` — never `0.00%` |
+| Positions | None. Paper trading keeps its own book |
+| Caveat | Unofficial endpoint, no contract; the header says **"Yahoo · may be delayed"** |
 
-Everything above the broker — the cache, the screen, the journal, papertrading — is source
-agnostic: the switch picks which class in `app/broker/` answers.
-
-Honesty rules that hold for both: a missing price renders `—`, never `0.00%`; a source that
-cannot be reached says so instead of showing yesterday's number as today's.
+Honesty rules: a missing price renders `—`, never `0.00%`; a source that cannot be reached
+says so instead of showing yesterday's number as today's; a feed that is not an exchange
+feed never wears the word "live".

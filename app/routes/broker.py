@@ -3,7 +3,7 @@
 Read-only. There is no endpoint that places, changes or cancels an order, and none will be
 added: AGENTS.md forbids execution and any buy/sell instruction from this product.
 
-When OpenD is not reachable every endpoint says so with a 503 and a reason. None of them
+When the source is unreachable every endpoint says so with a 503 and a reason. None of them
 falls back to sample data.
 """
 

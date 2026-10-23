@@ -110,11 +110,11 @@ def test_page_beyond_the_end_is_clamped():
 
 
 def test_a_failed_sweep_keeps_the_reason_and_no_rows():
-    broker = FakeBroker(connected=False, reason="OpenD is not listening on 127.0.0.1:11111")
+    broker = FakeBroker(connected=False, reason="Yahoo Finance did not answer")
     cache = MarketCache(broker)
 
     snap = cache.refresh()
 
     assert snap.rows == []
-    assert "11111" in (snap.error or "")
+    assert "Yahoo Finance did not answer" in (snap.error or "")
     assert cache.query()["ready"] is False

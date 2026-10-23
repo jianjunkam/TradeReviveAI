@@ -194,7 +194,7 @@ def test_reset_returns_to_the_starting_cash(tmp_path):
 def _client(tmp_path, *, connected: bool = True, mark: float = 400.0):
     broker = FakeBroker(
         connected=connected,
-        reason="OpenD is not listening on 127.0.0.1:11111" if not connected else None,
+        reason="Yahoo Finance did not answer" if not connected else None,
         quotes={"US.AAPL": _quote(343.99)},
         rows=[_row(mark)],
         universe=[SymbolInfo(symbol="US.AAPL", name="Apple", exchange="NASDAQ")],
@@ -265,7 +265,7 @@ def test_no_fill_happens_when_the_broker_is_down(tmp_path):
     )
 
     assert response.status_code == 503
-    assert "11111" in response.json()["detail"]
+    assert "Yahoo Finance did not answer" in response.json()["detail"]
     # And the account is untouched.
     assert client.get("/api/paper/account").json()["positions"] == []
 

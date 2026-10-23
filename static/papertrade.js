@@ -69,7 +69,7 @@
       ? "Unrealised P&L " + money(account.unrealised) + " · realised " + money(account.realised)
       : "Realised P&L " + money(account.realised);
     $("positions-sub").textContent = account.positions.length
-      ? "Marked at the latest price from OpenD"
+      ? "Marked at the latest Yahoo Finance price"
       : "Nothing held right now";
 
     var fills = document.querySelector("#fills-table tbody");

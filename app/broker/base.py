@@ -1,4 +1,4 @@
-"""Broker integration — read-only market data and positions from moomoo OpenD.
+"""Broker integration — read-only market data from Yahoo Finance.
 
 Nothing in here can place an order. The product's rules forbid trade execution and
 buy/sell signals (AGENTS.md), so this layer only *reads*: quotes, positions, account
@@ -6,11 +6,11 @@ summary.
 
 Two hard rules:
 
-* Never invent a number. If OpenD is not reachable, the answer is "not connected" with a
+* Never invent a number. If the source is not reachable, the answer is "not connected" with a
   reason — not a sample price. A trader acting on a fabricated quote is worse off than one
   who sees an error.
-* The SDK is imported lazily, so the app still starts and serves /demo on a machine where
-  the native SDK is missing.
+* There is no SDK to import any more: the source is an HTTPS endpoint, so the app starts
+  anywhere with a network connection.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from typing import Protocol
 
 
 class BrokerUnavailable(RuntimeError):
-    """OpenD is not running, not logged in, or refused the request.
+    """The market-data source is unreachable, or refused the request.
 
     The message is shown to the user, so it must say what to do next.
     """
@@ -62,7 +62,7 @@ class Quote:
     updated_at: str | None
     # None means "the broker did not say", which is not the same as "real time".
     delayed: bool | None = None
-    source: str = "moomoo OpenD"
+    source: str = "Yahoo Finance"
 
     def as_dict(self) -> dict:
         return {

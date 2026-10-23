@@ -1,7 +1,7 @@
 """The public dashboard's data: live quotes and positions with no sign-in.
 
 This exists because the human asked for the product's front page to work without a login,
-showing their own moomoo data. That is a real trade-off and it is fenced deliberately:
+showing live market data. That is a real trade-off and it is fenced deliberately:
 
   * off unless `PUBLIC_DASHBOARD=true` (default false),
   * the app must be reachable on 127.0.0.1 only, because positions are private,
@@ -12,6 +12,8 @@ forgot to set it looks like the feature does not exist.
 """
 
 from __future__ import annotations
+
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -104,3 +106,28 @@ def market_news(request: Request, limit: int = 8) -> dict:
     if settings.demo_closed:
         raise HTTPException(status_code=404, detail="Not found.")
     return request.app.state.news.get(limit=limit)
+
+
+@router.get("/overview")
+@public
+def market_overview(request: Request) -> dict:
+    """Indices, commodities, currencies, bonds and crypto: the markets-page groups.
+
+    Batched and cached in the broker, so one page view is five requests at most, and none
+    at all while the minute is still fresh.
+    """
+    settings = request.app.state.settings
+    if settings.demo_closed:
+        raise HTTPException(status_code=404, detail="Not found.")
+
+    broker = _broker(request)
+    try:
+        groups = broker.overview()
+    except BrokerUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return {
+        "groups": groups,
+        "source": getattr(broker, "SOURCE", "market data"),
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
+    }

@@ -55,6 +55,21 @@ class FakeBroker:
             raise BrokerUnavailable(f"the fake broker has no quote for {symbol}")
         return quote
 
+    def overview(self) -> list[dict]:
+        """Two groups are enough for a test; the real source has five."""
+        return [
+            {"title": "Indices", "error": None, "items": [
+                {"symbol": "^GSPC", "label": "S&P 500", "price": 7663.43,
+                 "change": -93.86, "change_pct": -1.2084},
+                {"symbol": "^VIX", "label": "VIX", "price": 19.03,
+                 "change": 2.35, "change_pct": 14.09},
+            ]},
+            {"title": "Crypto", "error": None, "items": [
+                {"symbol": "BTC-USD", "label": "Bitcoin", "price": 81700.51,
+                 "change": -1152.3, "change_pct": -1.3912},
+            ]},
+        ]
+
     def positions(self) -> list[Position]:
         if not self._connected:
             raise BrokerUnavailable(self._reason or "not connected")

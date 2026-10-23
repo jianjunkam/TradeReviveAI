@@ -1,6 +1,6 @@
 """The whole US market, in memory.
 
-Why this exists: the exchange holds ~7,000 listed US stocks, and OpenD will not give a
+Why this exists: the page shows the largest US companies, and a price for each, but
 snapshot of all of them in one request. It will do 200 at a time in about 0.3s, so a full
 sweep is ~36 requests and ~11 seconds. Doing that per page view would be absurd, and
 sorting by change across the market is impossible from a single page.
@@ -9,7 +9,7 @@ So: one background thread sweeps the market every `refresh_seconds`, and every r
 answered from memory. The data therefore has an age, and the UI is told that age rather
 than pretending it is tick-by-tick.
 
-Nothing here invents a number: a row keeps whatever OpenD reported, `None` stays `None`,
+Nothing here invents a number: a row keeps whatever Yahoo reported, `None` stays `None`,
 and a failed sweep keeps the previous rows while carrying the reason.
 """
 
@@ -96,7 +96,7 @@ class MarketCache:
         self._stop.set()
 
     def _loop(self) -> None:
-        # A missing OpenD at boot must not crash a thread: retry on the next tick.
+        # A source that is down at boot must not crash a thread: retry on the next tick.
         while not self._stop.is_set():
             try:
                 self.refresh()

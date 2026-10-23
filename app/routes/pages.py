@@ -29,13 +29,13 @@ def private_page(request: Request) -> Response:
 
     language = user.language_preference
 
-    # Checking the broker is a separate click: it opens a socket to OpenD, and a page load
+    # Checking the broker is a separate click: it makes a network call, and a page load
     # should not stall (or fail) because a local gateway is not running.
     if request.query_params.get("check") == "1":
         broker_state = request.app.state.broker.status()
         if broker_state.connected:
             broker_block = (
-                "<p class='sub'>Connected to moomoo OpenD at "
+                "<p class='sub'>Prices from Yahoo Finance. "
                 f"{html.escape(broker_state.host)}:{broker_state.port}. "
                 "Quotes and positions come straight from your broker.</p>"
                 "<span class='tag'>live</span>"
@@ -48,7 +48,7 @@ def private_page(request: Request) -> Response:
     else:
         broker_block = (
             "<p class='sub'>Not checked yet. Checking contacts your broker through the "
-            "moomoo OpenD gateway on this machine.</p>"
+            "The feed is unofficial and may be delayed.</p>"
             "<a class='btn secondary' style='width:auto;display:inline-flex;padding:8px 14px' "
             "href='/app?check=1'>Check connection</a>"
         )
