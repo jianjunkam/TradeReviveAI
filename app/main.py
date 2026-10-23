@@ -39,6 +39,7 @@ from app.routes import auth as auth_routes
 from app.routes import broker as broker_routes
 from app.routes import pages as page_routes
 from app.routes import journal as journal_routes
+from app.routes import diagnosis as diagnosis_routes
 from app.routes import paper as paper_routes
 from app.routes import public as public_routes
 from app.routes import trades as trade_routes
@@ -221,6 +222,7 @@ def create_app(
     app.include_router(public_routes.router, dependencies=[Depends(guard)])
     app.include_router(paper_routes.router, dependencies=[Depends(guard)])
     app.include_router(journal_routes.router, dependencies=[Depends(guard)])
+    app.include_router(diagnosis_routes.router, dependencies=[Depends(guard)])
     return app
 
 

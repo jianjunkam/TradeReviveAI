@@ -170,15 +170,20 @@ def test_positions_stay_behind_the_login_when_the_dashboard_is_private():
     assert "position" not in response.text.lower()
 
 
-def test_diagnosis_page_embeds_the_flowise_chatflow():
+def test_diagnosis_page_is_the_chat_itself():
+    """The widget used to sit in an iframe that the host refuses to frame, behind buttons
+    that did nothing. The page now owns the transcript and posts to our own proxy."""
     response = _client(public=True).get("/diagnosis")
 
     assert response.status_code == 200
     body = response.text
-    # The chatflow id is public by design; a secret here would be the failure.
-    assert "flowise-embed" in body
-    assert "f2ac3baa-63d0-4ce2-ba69-07d8fa7b66c8" in body
-    assert "https://flowise.bdctraining.cloud" in body
+    assert 'id="chat-log"' in body
+    assert 'id="chat-form"' in body
+    assert "/static/diagnosis.js" in body
+    # No embed script, no dead controls, and no chatflow id or key in the markup.
+    assert "flowise-embed" not in body
+    assert "Open the chat" not in body
+    assert "f2ac3baa" not in body
     assert "apiKey" not in body
 
 
