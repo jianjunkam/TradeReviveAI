@@ -82,6 +82,13 @@ def create_app(
         openapi_url="/openapi.json" if resolved.environment == "development" else None,
     )
     app.state.settings = resolved
+    logger.info(
+        "demo pages=%s | sign-in required=%s | positions public=%s | environment=%s",
+        "closed" if resolved.demo_closed else "open",
+        resolved.require_sign_in,
+        resolved.public_positions,
+        resolved.environment,
+    )
 
     engine = None
     if store is None or tenancy is None:
@@ -138,7 +145,7 @@ def create_app(
         refresh_seconds=resolved.market_refresh_seconds,
         top_n=resolved.market_top_n,
     )
-    if resolved.public_dashboard and market is None:
+    if not resolved.demo_closed and market is None:
         app.state.market.start()
 
     # Headlines are fetched server-side and cached: Yahoo sends no CORS headers, so the
@@ -175,7 +182,7 @@ def create_app(
 
     def _dashboard_page(name: str) -> Response:
         """The public pages exist only when the dashboard is switched on."""
-        if not resolved.public_dashboard:
+        if resolved.demo_closed:
             return RedirectResponse("/sign-in", status_code=303)
         return FileResponse(STATIC_DIR / name)
 

@@ -123,7 +123,7 @@ def _client(public: bool = True) -> TestClient:
         settings=Settings(
             app_secret="test-only",
             environment="development",
-            public_dashboard=public,
+            demo_closed=not public,
         ),
         broker=broker,
         market=MarketCache(broker),

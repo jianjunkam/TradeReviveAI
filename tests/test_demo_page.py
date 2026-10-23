@@ -14,14 +14,14 @@ from app.main import create_app
 from app.market import MarketCache
 
 
-def _client(public_dashboard: bool = False) -> TestClient:
+def _client(public_dashboard: bool = True) -> TestClient:
     # A fake broker and an unstarted cache: a test must never sweep the live market.
     broker = FakeBroker()
     app = create_app(
         settings=Settings(
             app_secret="test-only",
             environment="development",
-            public_dashboard=public_dashboard,
+            demo_closed=not public_dashboard,
         ),
         broker=broker,
         market=MarketCache(broker),
@@ -51,8 +51,8 @@ def test_root_serves_the_dashboard_when_the_public_dashboard_is_on():
     assert "TradeRevive AI" in response.text
 
 
-def test_root_sends_visitors_to_sign_in_when_the_dashboard_is_private():
-    response = _client().get("/")
+def test_root_sends_visitors_to_sign_in_when_the_dashboard_is_closed():
+    response = _client(public_dashboard=False).get("/")
 
     assert response.status_code == 303
     assert response.headers["location"] == "/sign-in"

@@ -1,6 +1,6 @@
 """Paper-trading endpoints. Simulated fills at the broker's last price.
 
-Everything is fenced behind the same `public_dashboard` switch as the rest of the demo,
+Everything is fenced behind the same `DEMO_CLOSED` switch as the rest of the demo,
 and no endpoint can reach a real trading context — `PaperStore` writes to a JSON file.
 """
 
@@ -25,7 +25,7 @@ class OrderRequest(BaseModel):
 
 
 def _gate(request: Request) -> PaperStore:
-    if not request.app.state.settings.public_dashboard:
+    if request.app.state.settings.demo_closed:
         raise HTTPException(status_code=404, detail="Not found.")
     return request.app.state.paper
 

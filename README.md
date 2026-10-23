@@ -95,7 +95,7 @@ All settings come from `.env` (see `.env.example`). The ones that matter:
 |---|---|---|
 | `APP_SECRET` | — | **Required.** Signs the session cookie and magic links. |
 | `ENVIRONMENT` | `production` | Only `development` relaxes cookies and enables `/docs`. Deliberately safe by default. |
-| `PUBLIC_DASHBOARD` | `true` | Serve market, journal, papertrade and diagnosis without a login. |
+| `DEMO_CLOSED` | `false` | Set `true` to close the demo pages and serve the sign-in card. |
 | `REQUIRE_SIGN_IN` | `true` | Require the sign-in flow for `/app`. `false` removes the login page. |
 | `DEMO_SIGN_IN` | `true` | Show the "enter the demo account" button on the sign-in card. |
 | `PUBLIC_POSITIONS` | `false` | Include the broker account's open positions in the public API. |
@@ -127,8 +127,12 @@ REQUIRE_SIGN_IN=false
 ```
 
 Without it, `/app` still asks for the sign-in flow (the product's real behaviour, and what the
-M1 acceptance tests assert). `PUBLIC_DASHBOARD=false` closes the demo pages; and
-`PUBLIC_POSITIONS=true` adds your broker account's open positions to `/api/public/market`.
+M1 acceptance tests assert). `DEMO_CLOSED=true` closes the demo pages; and `PUBLIC_POSITIONS=true` adds your broker
+account's open positions to `/api/public/market`.
+
+`PUBLIC_DASHBOARD` is no longer read. It used to gate the demo pages, and a stale
+`PUBLIC_DASHBOARD=false` in a deployed `.env` put the whole product behind a login page whose
+email never arrives — so the gate moved to an opt-out flag instead.
 
 Two things a hosted copy will not have, by design:
 

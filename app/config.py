@@ -47,9 +47,12 @@ class Settings(BaseSettings):
     opend_trade_market: str = "US"
     opend_trade_env: str = "SIMULATE"
 
-    #: Serve the demo pages (market, journal, papertrade, diagnosis) with NO sign-in.
-    #: On by default: these are the product demo, and a host that forgets an env var should
-    #: still show the product rather than a login card nobody can get past.
+    #: Close the demo pages (market, journal, papertrade, diagnosis) and serve the sign-in
+    #: card instead. Off by default, because a demo that nobody can open is not a demo.
+    demo_closed: bool = False
+    #: Retired: this used to gate the demo pages, and a stale `PUBLIC_DASHBOARD=false` in a
+    #: deployed .env hid the entire product behind a login page whose email never arrives.
+    #: Kept as a field so old configs load, never read as a gate. Use DEMO_CLOSED instead.
     public_dashboard: bool = True
     #: Put the login flow in front of /app. True by default: that is what the product
     #: does, and M1 asserts it. The demo env file sets it false so a reviewer lands inside.

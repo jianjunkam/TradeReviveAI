@@ -29,7 +29,7 @@ def _broker(request: Request) -> Broker:
 @public
 def public_market(request: Request) -> dict:
     settings = request.app.state.settings
-    if not settings.public_dashboard:
+    if settings.demo_closed:
         raise HTTPException(status_code=404, detail="Not found.")
 
     broker = _broker(request)
@@ -81,7 +81,7 @@ def us_market(
     Served from the cache, so `age_seconds` tells the caller how old the numbers are.
     """
     settings = request.app.state.settings
-    if not settings.public_dashboard:
+    if settings.demo_closed:
         raise HTTPException(status_code=404, detail="Not found.")
 
     descending = None
@@ -101,6 +101,6 @@ def market_news(request: Request, limit: int = 8) -> dict:
     faster than that.
     """
     settings = request.app.state.settings
-    if not settings.public_dashboard:
+    if settings.demo_closed:
         raise HTTPException(status_code=404, detail="Not found.")
     return request.app.state.news.get(limit=limit)

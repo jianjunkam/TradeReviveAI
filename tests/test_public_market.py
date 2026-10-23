@@ -62,7 +62,7 @@ def _client(
         settings=Settings(
             app_secret="test-only",
             environment="development",
-            public_dashboard=public,
+            demo_closed=not public,
             public_positions=positions,
             demo_watchlist=watchlist,
         ),

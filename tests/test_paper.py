@@ -219,7 +219,7 @@ def _client(tmp_path, *, connected: bool = True, mark: float = 400.0):
 
 def test_paper_endpoints_are_closed_when_the_dashboard_is_off(tmp_path):
     app = create_app(
-        settings=Settings(app_secret="test-only", environment="development", public_dashboard=False),
+        settings=Settings(app_secret="test-only", environment="development", demo_closed=True),
         broker=FakeBroker(),
         market=MarketCache(FakeBroker()),
         paper=PaperStore(tmp_path / "paper.json"),

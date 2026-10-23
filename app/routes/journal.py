@@ -62,7 +62,7 @@ def _holding_days(fills: list[Fill]) -> dict[str, int]:
 @router.get("/summary")
 @public
 def summary(request: Request) -> dict:
-    if not request.app.state.settings.public_dashboard:
+    if request.app.state.settings.demo_closed:
         raise HTTPException(status_code=404, detail="Not found.")
 
     account = request.app.state.paper.account()
