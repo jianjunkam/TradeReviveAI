@@ -42,11 +42,18 @@ cp .env.example .env               # then edit it — see Settings
 Start it:
 
 ```bash
-uvicorn app.main:app --host 127.0.0.1 --port 8000
-# Windows: ./.venv/Scripts/python.exe -m uvicorn app.main:app --port 8000
+./start.sh          # Windows: double-click start.bat
 ```
 
+The script checks the virtualenv (creating it if needed), makes `.env` if it is missing,
+brings up Postgres when Docker is available, reports whether OpenD is listening, and picks a
+free port — then serves the app with **no login page**. `PORT=8080 ./start.sh` overrides the
+port.
+
 Open <http://127.0.0.1:8000>.
+
+(The raw command still works if you prefer: `uvicorn app.main:app --port 8000`, but it will
+put the login page back in front of `/app` unless `REQUIRE_SIGN_IN=false` is exported.)
 
 ### Minimum `.env` for the demo
 
