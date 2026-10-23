@@ -311,11 +311,7 @@
 
     var groups = (payload && payload.groups) || [];
     if (!groups.length) {
-      grid.innerHTML = "";
-      var empty = document.createElement("p");
-      empty.className = "live-note";
-      empty.textContent = "Markets are unavailable right now.";
-      grid.appendChild(empty);
+      hideOverview();
       return;
     }
 
@@ -374,6 +370,11 @@
     if (note) note.textContent = payload.source ? "from " + payload.source : "";
   }
 
+  function hideOverview() {
+    var card = document.querySelector(".overview-card");
+    if (card) card.hidden = true;
+  }
+
   function loadOverview() {
     fetch("/api/public/overview", { headers: { Accept: "application/json" } })
       .then(function (response) {
@@ -381,10 +382,9 @@
         return response.json();
       })
       .then(renderOverview)
-      .catch(function (error) {
-        var grid = document.getElementById("overview-grid");
-        if (grid) grid.innerHTML = '<p class="live-note">Markets are unavailable: ' +
-          error.message + ".</p>";
+      .catch(function () {
+        // 404 (an older build) or an unreachable feed: no card rather than an empty one.
+        hideOverview();
       });
   }
 
