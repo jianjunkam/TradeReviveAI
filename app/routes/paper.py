@@ -12,6 +12,8 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.broker.base import BrokerUnavailable
+from app.ai.analysis import analyse_book
+from app.ai.book import book_flags, book_summary
 from app.paper import PaperError, PaperStore
 from app.permissions import public
 
@@ -98,3 +100,30 @@ def reset(request: Request) -> dict:
     store = _gate(request)
     store.reset()
     return {"account": store.account().state(_marks(request))}
+
+
+@router.post("/analysis")
+@public
+def analysis(request: Request) -> dict:
+    """Review the open book: arithmetic first, then one model call over those facts.
+
+    POST because it spends money, and because a page refresh must not bill anyone.
+    """
+    store = _gate(request)
+    settings = request.app.state.settings
+
+    account = store.account()
+    state = account.state(_marks(request))
+    flags = book_flags(state, account.fills, float(account.starting_cash))
+    summary = book_summary(state, flags, account.fills)
+
+    result = analyse_book(summary, settings).as_dict()
+    result["flags"] = flags
+    result["account"] = {
+        "cash": state["cash"],
+        "equity": state["equity"],
+        "invested": state["market_value"],
+        "unrealised": state["unrealised"],
+        "open_positions": len(state["positions"]),
+    }
+    return result

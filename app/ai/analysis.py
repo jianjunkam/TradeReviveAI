@@ -126,6 +126,48 @@ def allowed_amounts(summary: dict) -> set[float]:
     return {round(float(v), 2) for v in values if v is not None}
 
 
+def figures_in(text: str) -> list[float]:
+    """Every dollar amount in a string, as numbers."""
+    import re
+
+    out = []
+    for raw in re.findall(r"\$\s?([0-9][0-9,]*(?:\.[0-9]{1,2})?)", text or ""):
+        try:
+            out.append(round(float(raw.replace(",", "")), 2))
+        except ValueError:
+            continue
+    return out
+
+
+def unknown_in(text: str, allowed: set[float]) -> list[str]:
+    """Amounts in `text` that are not in `allowed` — a model doing its own arithmetic."""
+    strays = [f"${value:,.2f}".replace(".00", "") for value in figures_in(text) if value not in allowed]
+    return sorted(set(strays))
+
+
+def _book_amounts(book: dict) -> set[float]:
+    values: set[float] = set()
+    for key in ("cash", "equity", "starting_cash", "invested", "unrealised"):
+        value = book.get(key)
+        try:
+            if value is not None:
+                values.add(round(float(value), 2))
+        except (TypeError, ValueError):
+            pass
+    for position in book.get("positions", []):
+        for key in ("cost", "price", "market_value", "unrealised"):
+            value = position.get(key)
+            try:
+                if value is not None:
+                    values.add(round(float(value), 2))
+            except (TypeError, ValueError):
+                pass
+    # Numbers the flags themselves state are fair game.
+    for flag in book.get("flags", []):
+        values.update(figures_in(flag.get("text", "")))
+    return values
+
+
 def unknown_figures(text: str, summary: dict, headlines: list[dict] | None = None) -> list[str]:
     """Dollar amounts in the reply that were in neither the figures nor the headlines."""
     import re
@@ -271,3 +313,99 @@ def analyse(summary: dict, settings, news: dict | None = None) -> Analysis:
         headlines=headlines,
         headlines_error=(news or {}).get("error"),
     )
+
+
+BOOK_PROMPT = (
+    "You are reviewing a retail trader's simulated paper portfolio. Use ONLY the figures "
+    "provided. Never invent a number, a price or a ticker. "
+    "You must NOT tell the trader to buy or sell any security, must not give a price target, "
+    "must not predict prices, and must not imply that a loss will be recovered. "
+    "Instead: state what the book shows, name the single decision the data puts in front of "
+    "them (as a question, not an instruction), and give one process check for this week. "
+    "At most 110 words, plain prose, no headings or bullet lists. Finish with: Not financial advice."
+)
+
+
+def build_book_prompt(book: dict) -> str:
+    def money(value) -> str:
+        return "n/a" if value is None else f"${float(value):,.2f}"
+
+    lines = []
+    for p in book.get("positions", [])[:12]:
+        lines.append(
+            f"- {p['symbol']}: {p.get('quantity')} shares, cost {money(p.get('cost'))}, "
+            f"now {money(p.get('price'))}, value {money(p.get('market_value'))}, "
+            f"unrealised {money(p.get('unrealised'))}"
+            + ("" if p.get("priced") else " (valued at cost: no live price)")
+            + (f", open {p['days_held']} days" if p.get("days_held") is not None else "")
+        )
+    positions = "\n".join(lines) or "- none"
+
+    flags = "\n".join(
+        f"- [{f['rule']}] {f['text']}" for f in book.get("flags", [])
+    ) or "- none"
+
+    return f"""{BOOK_PROMPT}
+
+The account (simulated money):
+- cash: {money(book.get('cash'))} of equity {money(book.get('equity'))} (started at {money(book.get('starting_cash'))})
+- invested: {money(book.get('invested'))}, unrealised P&L: {money(book.get('unrealised'))}
+- open positions: {book.get('open_positions')}
+{positions}
+
+Rules already computed from the data (do not add or remove any):
+{flags}
+
+Write the review now."""
+
+
+def analyse_book(book: dict, settings) -> Analysis:
+    """One model call over the book. Same providers, same cache, same refusal to invent."""
+    prompt = build_book_prompt(book)
+    key = "book:" + _cache_key(prompt)
+
+    with _lock:
+        hit = _cache.get(key)
+        if hit and time.time() - hit[0] < CACHE_TTL:
+            return Analysis(**{**hit[1].as_dict(), "cached": True})
+
+    providers = []
+    if settings.deepseek_api_key is not None and settings.deepseek_api_key.get_secret_value():
+        providers.append(("deepseek", _call_deepseek))
+    if settings.flowise_chatflow_id:
+        providers.append(("flowise", _call_flowise))
+
+    if not providers:
+        return Analysis(
+            available=False,
+            reason=(
+                "No model is configured. Set DEEPSEEK_API_KEY (or FLOWISE_CHATFLOW_ID) in the "
+                "server's .env and this section fills in."
+            ),
+        )
+
+    errors: list[str] = []
+    for name, caller in providers:
+        started = time.monotonic()
+        try:
+            text, model = caller(prompt, settings)
+        except urllib.error.HTTPError as exc:
+            errors.append(f"{name}: HTTP {exc.code}")
+            continue
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{name}: {exc}")
+            continue
+
+        result = Analysis(
+            available=True,
+            text=text,
+            provider=name,
+            model=model,
+            latency_ms=int((time.monotonic() - started) * 1000),
+            unknown_figures=unknown_in(text, _book_amounts(book)),
+        )
+        with _lock:
+            _cache[key] = (time.time(), result)
+        return result
+
+    return Analysis(available=False, reason="The model could not be reached: " + "; ".join(errors))

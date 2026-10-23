@@ -483,3 +483,17 @@ a.btn.secondary, a.btn.secondary:visited { color: var(--ink); }
 
 @media (max-width: 1080px) { .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px)  { .overview-grid { grid-template-columns: 1fr; } }
+
+/* --------------------------------------------------------- book review */
+
+.book-flags { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.book-flag {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 9px 12px; border-radius: 10px; font-size: 12.5px; line-height: 1.5;
+}
+.book-flag.warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+.book-flag.info { background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; }
+.book-flag .flag-rule {
+  flex: none; font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; opacity: .75; padding-top: 1px; min-width: 104px;
+}

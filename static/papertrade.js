@@ -188,7 +188,68 @@
 
   // ------------------------------------------------------------------- init
 
+  function renderBookFlags(flags) {
+    var box = $("book-flags");
+    box.innerHTML = "";
+    (flags || []).forEach(function (flag) {
+      var row = document.createElement("div");
+      row.className = "book-flag " + (flag.severity || "info");
+
+      var rule = document.createElement("span");
+      rule.className = "flag-rule";
+      rule.textContent = (flag.rule || "").replace(/_/g, " ").toLowerCase();
+
+      var text = document.createElement("span");
+      text.textContent = flag.text;
+
+      row.appendChild(rule);
+      row.appendChild(text);
+      box.appendChild(row);
+    });
+  }
+
+  function reviewBook() {
+    var button = $("book-run");
+    var body = $("book-body");
+    var meta = $("book-meta");
+
+    button.disabled = true;
+    button.textContent = "Reading…";
+    body.textContent = "Asking the model…";
+    meta.hidden = true;
+
+    fetch("/api/paper/analysis", { method: "POST", headers: { Accept: "application/json" } })
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        renderBookFlags(data.flags);
+        if (!data.available) {
+          body.textContent = data.reason || "The model is not available right now.";
+          return;
+        }
+        body.textContent = data.text;
+        var parts = [data.provider];
+        if (data.latency_ms != null) parts.push(data.latency_ms + " ms");
+        parts.push(data.cached ? "cached reply" : "fresh call");
+        if (data.unknown_figures && data.unknown_figures.length) {
+          parts.push("⚠ quoted figures not in your data: " + data.unknown_figures.join(", "));
+          meta.style.color = "#b45309";
+        } else {
+          meta.style.color = "";
+        }
+        meta.hidden = false;
+        meta.textContent = parts.join(" · ");
+      })
+      .catch(function (error) {
+        body.textContent = "The request failed: " + error.message;
+      })
+      .finally(function () {
+        button.disabled = false;
+        button.textContent = "Review my book";
+      });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    $("book-run").addEventListener("click", reviewBook);
     $("buy-btn").addEventListener("click", function (event) {
       event.preventDefault();
       submitOrder("buy");
