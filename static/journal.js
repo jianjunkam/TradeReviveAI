@@ -310,9 +310,11 @@
   function load() {
     fetch("/api/journal/summary", { headers: { Accept: "application/json" } })
       .then(function (r) { if (!r.ok) throw new Error("journal " + r.status); return r.json(); })
-      .then(render)
+      .then(function (data) { lastSummary = data; render(data); })
       .catch(function (e) { $("diagnosis-body").textContent = "Could not load the journal: " + e.message; });
   }
+
+  var lastSummary = null;
 
   function renderAnalysis(data) {
     var body = $("ai-body");
@@ -333,12 +335,51 @@
     meta.textContent = parts.join(" · ");
 
     // A model doing its own arithmetic is the failure mode this section must not hide.
+    if (lastSummary && lastSummary.marks_at_cost) {
+      parts.push("open positions valued at cost");
+    }
+
     if (data.unknown_figures && data.unknown_figures.length) {
       meta.textContent += " · ⚠ quoted figures not in your data: " + data.unknown_figures.join(", ");
       meta.style.color = "#b45309";
     } else {
       meta.style.color = "";
     }
+  }
+
+  function renderHeadlines(data) {
+    var box = $("ai-news");
+    var list = $("ai-news-list");
+    var title = $("ai-news-title");
+
+    if (!data.headlines || !data.headlines.length) {
+      box.hidden = false;
+      title.textContent = data.headlines_error
+        ? "No headlines were available (" + data.headlines_error + ") — the model was told to ignore news."
+        : "No headlines were available for your symbols — the model was told to ignore news.";
+      list.innerHTML = "";
+      return;
+    }
+
+    box.hidden = false;
+    title.textContent = "Headlines the model was given — Yahoo Finance feed per symbol, " +
+      data.headlines.length + " item(s). Yahoo's matching is loose: check the company in the headline.";
+    list.innerHTML = "";
+    data.headlines.forEach(function (h) {
+      var li = document.createElement("li");
+      var link = document.createElement("a");
+      link.href = h.link || "#";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = h.title;
+      li.appendChild(link);
+      var meta = document.createElement("span");
+      meta.className = "ai-news-meta";
+      meta.textContent = " " + (h.symbol || "") + " · " + (h.publisher || "unknown") +
+        (h.published ? " · " + h.published.slice(0, 10) : "");
+      li.appendChild(meta);
+      list.appendChild(li);
+    });
   }
 
   function runAnalysis() {
@@ -349,7 +390,7 @@
 
     fetch("/api/journal/analysis", { method: "POST", headers: { Accept: "application/json" } })
       .then(function (r) { return r.json(); })
-      .then(renderAnalysis)
+      .then(function (data) { renderAnalysis(data); renderHeadlines(data); })
       .catch(function (e) {
         $("ai-body").textContent = "The request failed: " + e.message;
       })

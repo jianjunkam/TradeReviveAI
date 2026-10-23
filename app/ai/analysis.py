@@ -23,6 +23,7 @@ import threading
 import time
 import urllib.error
 import urllib.request
+import uuid
 from dataclasses import asdict, dataclass
 
 REQUEST_TIMEOUT = 30.0
@@ -38,7 +39,10 @@ SYSTEM_PROMPT = (
     "imply that losses will be recovered. No signals, no targets, no 'should buy'. "
     "Write at most 120 words in three short parts: what the numbers show, the single most "
     "expensive habit, and one concrete exercise for this week. Plain prose, no headings, no "
-    "bullet lists. Finish with the sentence: Not financial advice."
+    "bullet lists. Finish with the sentence: Not financial advice. "
+    "If headlines are supplied, you may mention at most one that touches a symbol the trader "
+    "holds, in a single sentence, as context only: never as a reason to buy or sell, never as "
+    "a prediction, and never as though you verified it."
 )
 
 
@@ -53,12 +57,15 @@ class Analysis:
     reason: str | None = None
     #: Dollar amounts the reply states that were never supplied — a model doing its own maths.
     unknown_figures: list[str] | None = None
+    #: Headlines handed to the model, so the reader can judge the sentence that used them.
+    headlines: list[dict] | None = None
+    headlines_error: str | None = None
 
     def as_dict(self) -> dict:
         return asdict(self)
 
 
-def build_prompt(summary: dict) -> str:
+def build_prompt(summary: dict, headlines: list[dict] | None = None) -> str:
     """The model sees these lines and nothing else."""
     def money(value) -> str:
         return "n/a" if value is None else f"${value:,.2f}"
@@ -67,6 +74,29 @@ def build_prompt(summary: dict) -> str:
         f"- {m['label']}: {m['count']} occurrence(s), costing {money(m['cost'])}"
         for m in summary.get("mistakes", [])
     )
+
+    at_cost = ""
+    if summary.get("marks_at_cost"):
+        at_cost = (
+            "\n  (open positions were valued at cost when this was computed: no live price was "
+            "available, so the unrealised part is zero and net P&L equals realised P&L. If you "
+            "mention open positions, say that they were not marked to market.)"
+        )
+
+    if headlines:
+        lines = "\n".join(
+            f"- {h.get('symbol', '')}: {h.get('title', '')[:140]} "
+            f"({h.get('publisher') or 'unknown'}, {(h.get('published') or '')[:10]})"
+            for h in headlines[:8]
+        )
+        news = (
+            "Recent headlines for the symbols in this account (Yahoo Finance RSS; unverified, "
+            "may be stale, may not be about this trader at all):\n"
+            f"{lines}"
+        )
+    else:
+        news = ("No headlines were available for the symbols in this account. Do not mention "
+                "any news, and do not guess at what the news might say.")
     return f"""{SYSTEM_PROMPT}
 
 The trader's figures (all simulated papertrading, not a real account):
@@ -75,13 +105,13 @@ The trader's figures (all simulated papertrading, not a real account):
 - profit factor: {summary.get('profit_factor')}
 - average win: {money(summary.get('avg_win'))}, average loss: {money(summary.get('avg_loss'))}
 - best trade: {money(summary.get('best'))}, worst trade: {money(summary.get('worst'))}
-- net P&L: {money(summary.get('net_pl'))} — this is the total; do not add anything to it
-- of which realised on closed trades: {money(summary.get('realised'))}
-- of which unrealised on open positions: {money(summary.get('unrealised'))} (already included above)
+- net P&L: {money(summary.get('net_pl'))} — the only profit figure; do not add anything to it{at_cost}
 - equity: {money(summary.get('equity'))} from a {money(summary.get('starting_cash'))} start
 - max drawdown: {money(summary.get('max_drawdown'))} ({summary.get('max_drawdown_pct')}%)
 - behaviour rules that fired:
 {habits}
+
+{news}
 
 Write the review now."""
 
@@ -96,11 +126,17 @@ def allowed_amounts(summary: dict) -> set[float]:
     return {round(float(v), 2) for v in values if v is not None}
 
 
-def unknown_figures(text: str, summary: dict) -> list[str]:
-    """Dollar amounts in the reply that were not in the figures handed to the model."""
+def unknown_figures(text: str, summary: dict, headlines: list[dict] | None = None) -> list[str]:
+    """Dollar amounts in the reply that were in neither the figures nor the headlines."""
     import re
 
     allowed = allowed_amounts(summary)
+    for headline in headlines or []:
+        for raw in re.findall(r"\$\s?([0-9][0-9,]*(?:\.[0-9]{1,2})?)", headline.get("title", "")):
+            try:
+                allowed.add(round(float(raw.replace(",", "")), 2))
+            except ValueError:
+                continue
     found = re.findall(r"\$\s?([0-9][0-9,]*(?:\.[0-9]{1,2})?)", text)
     strays = []
     for raw in found:
@@ -156,9 +192,16 @@ def _call_deepseek(prompt: str, settings) -> tuple[str, str]:
 def _call_flowise(prompt: str, settings) -> tuple[str, str]:
     if not settings.flowise_chatflow_id:
         raise RuntimeError("no chatflow")
+    # A fresh session id per call. Flowise keeps the conversation per session, and a chat
+    # that remembers yesterday's numbers will quote them back as today's: the first version
+    # of this repeated realised P&L as the net figure because the chatflow had been told the
+    # older numbers in an earlier turn.
     data = _post_json(
         f"https://{settings.flowise_host}/api/v1/prediction/{settings.flowise_chatflow_id}",
-        {"question": prompt},
+        {
+            "question": prompt,
+            "overrideConfig": {"sessionId": f"journal-{uuid.uuid4().hex}"},
+        },
         {},
     )
     text = (data.get("text") or "").strip()
@@ -167,9 +210,10 @@ def _call_flowise(prompt: str, settings) -> tuple[str, str]:
     return text, "flowise chatflow"
 
 
-def analyse(summary: dict, settings) -> Analysis:
+def analyse(summary: dict, settings, news: dict | None = None) -> Analysis:
     """One call, cached. Returns unavailable with a reason rather than a fabricated review."""
-    prompt = build_prompt(summary)
+    headlines = list((news or {}).get("items") or [])[:8]
+    prompt = build_prompt(summary, headlines)
     key = _cache_key(prompt)
 
     with _lock:
@@ -191,6 +235,8 @@ def analyse(summary: dict, settings) -> Analysis:
                 "No model is configured. Set DEEPSEEK_API_KEY (or FLOWISE_CHATFLOW_ID) in the "
                 "server's .env and this section fills in."
             ),
+            headlines=headlines,
+            headlines_error=(news or {}).get("error"),
         )
 
     errors: list[str] = []
@@ -211,7 +257,9 @@ def analyse(summary: dict, settings) -> Analysis:
             provider=name,
             model=model,
             latency_ms=int((time.monotonic() - started) * 1000),
-            unknown_figures=unknown_figures(text, summary),
+            unknown_figures=unknown_figures(text, summary, headlines),
+            headlines=headlines,
+            headlines_error=(news or {}).get("error"),
         )
         with _lock:
             _cache[key] = (time.time(), result)
@@ -220,4 +268,6 @@ def analyse(summary: dict, settings) -> Analysis:
     return Analysis(
         available=False,
         reason="The model could not be reached: " + "; ".join(errors),
+        headlines=headlines,
+        headlines_error=(news or {}).get("error"),
     )

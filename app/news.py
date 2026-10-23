@@ -18,7 +18,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 
 REQUEST_TIMEOUT = 10.0
@@ -137,6 +137,9 @@ class NewsFeed:
         self._headlines: list[Headline] = []
         self._fetched_at: datetime | None = None
         self._error: str | None = None
+        #: Separate cache per symbol set, so the AI section can ask about the account's own
+        #: tickers without disturbing the dashboard's fixed list.
+        self._by_symbols: dict[str, tuple[datetime, list[Headline]]] = {}
 
     # ------------------------------------------------------------------ fetch
 
@@ -187,3 +190,69 @@ class NewsFeed:
                 "error": self._error,
                 "ready": bool(self._headlines),
             }
+
+    def for_symbols(self, symbols: list[str], limit: int = 8, per_symbol: int = 3) -> dict:
+        """Headlines for specific tickers — the ones in the paper account.
+
+        One feed per symbol, merged and tagged, because a headline the reader cannot
+        attribute to a company is noise: "Model faces a make-or-break week" means nothing
+        until it says TSLA. Cached per symbol for the same ten minutes as the market feed.
+        """
+        cleaned = [s.strip().upper() for s in symbols if s and s.strip()][:6]
+        if not cleaned:
+            return {"items": [], "symbols": [], "source": "Yahoo Finance",
+                    "fetched_at": None, "age_seconds": None,
+                    "error": "No symbols to look up.", "ready": False}
+
+        now = datetime.now(timezone.utc)
+        items: list[dict] = []
+        errors: list[str] = []
+        oldest_age: float | None = None
+
+        for symbol in cleaned:
+            with self._lock:
+                cached = self._by_symbols.get(symbol)
+            age = (now - cached[0]).total_seconds() if cached else None
+            if cached and age is not None and age <= self._refresh_seconds:
+                fresh = cached[1]
+            else:
+                url = self.TEMPLATE.format(symbols=symbol)
+                request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+                try:
+                    with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:
+                        payload = response.read().decode("utf-8", errors="replace")
+                    fresh = parse_feed(payload, limit=per_symbol)
+                    if not fresh:
+                        raise ValueError("the feed returned no headlines")
+                except (urllib.error.URLError, TimeoutError, OSError, ValueError, ET.ParseError) as exc:
+                    errors.append(f"{symbol}: {exc}")
+                    fresh = cached[1] if cached else []
+                else:
+                    with self._lock:
+                        self._by_symbols[symbol] = (now, fresh)
+                    age = 0.0
+
+            for headline in fresh[:per_symbol]:
+                items.append({**headline.as_dict(), "symbol": symbol})
+            if age is not None:
+                oldest_age = age if oldest_age is None else max(oldest_age, age)
+
+        # One story often appears under several tickers; keep the first.
+        seen: set[str] = set()
+        merged: list[dict] = []
+        for item in sorted(items, key=lambda h: h.get("published") or "", reverse=True):
+            key = (item.get("title") or "").strip().lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(item)
+
+        return {
+            "items": merged[:limit],
+            "symbols": cleaned,
+            "source": "Yahoo Finance",
+            "fetched_at": now.isoformat(),
+            "age_seconds": round(oldest_age, 1) if oldest_age is not None else None,
+            "error": "; ".join(errors) if errors and not merged else None,
+            "ready": bool(merged),
+        }

@@ -163,3 +163,99 @@ def test_a_clean_reply_has_no_flags(monkeypatch):
     result = ai.analyse(SUMMARY, settings)
 
     assert result.unknown_figures == []
+
+
+# ---------------------------------------------------------------- news context
+
+HEADLINES = [
+    {"symbol": "NVDA", "title": "Nvidia beats estimates as data-centre sales surge",
+     "publisher": "Reuters", "published": "2026-10-22T20:00:00+00:00",
+     "link": "https://example.test/1", "summary": ""},
+    {"symbol": "KO", "title": "Coca-Cola raises full-year outlook",
+     "publisher": "Yahoo Finance", "published": "2026-10-21T13:00:00+00:00",
+     "link": "https://example.test/2", "summary": ""},
+]
+
+
+def test_the_prompt_carries_headlines_with_their_symbols():
+    prompt = ai.build_prompt(SUMMARY, HEADLINES)
+
+    assert "NVDA: Nvidia beats estimates" in prompt
+    assert "KO: Coca-Cola raises" in prompt
+    assert "unverified" in prompt.lower()
+
+
+def test_without_headlines_the_model_is_told_to_ignore_news():
+    prompt = ai.build_prompt(SUMMARY, [])
+
+    assert "No headlines were available" in prompt
+    assert "do not guess at what the news might say" in prompt.lower()
+
+
+def test_a_headline_figure_is_not_flagged_as_invented():
+    """If a headline says '$4 billion', the model may repeat it."""
+    headlines = [{"symbol": "NVDA", "title": "Nvidia adds $4 billion to buybacks"}]
+
+    assert ai.unknown_figures("Nvidia added $4 billion to buybacks.", SUMMARY, headlines) == []
+    # Outside a headline the same words are a figure nobody supplied.
+    assert ai.unknown_figures("Nvidia added $4 billion to buybacks.", SUMMARY, []) == ["$4"]
+
+
+def test_the_route_sends_the_held_symbols_to_the_news_feed(monkeypatch):
+    captured = {}
+
+    class FakeNews:
+        def for_symbols(self, symbols, limit=8, per_symbol=3):
+            captured["symbols"] = symbols
+            return {"items": HEADLINES, "symbols": symbols, "error": None, "ready": True}
+
+    def capture(prompt, settings):
+        captured["prompt"] = prompt
+        return "review", "fake-model"
+
+    monkeypatch.setattr(ai, "_call_flowise", capture)
+    ai._cache.clear()
+
+    client = _client(chatflow="test-chatflow")
+    client.app.state.news = FakeNews()
+    body = client.post("/api/journal/analysis").json()
+
+    assert body["available"] is True
+    assert body["headlines"] == HEADLINES
+    assert "Nvidia beats estimates" in captured["prompt"]
+    # US. prefix stripped, because Yahoo wants NVDA not US.NVDA
+    assert all(not s.startswith("US.") for s in captured["symbols"])
+
+
+def test_the_headline_list_is_capped():
+    class Many:
+        def for_symbols(self, symbols, limit=8, per_symbol=3):
+            return {"items": [dict(HEADLINES[0], title=f"story {n}") for n in range(50)],
+                    "symbols": symbols, "error": None, "ready": True}
+
+    assert len(Many().for_symbols(["AAPL"])["items"]) == 50  # the fake itself is not capped
+    # the prompt, however, only ever shows eight
+    prompt = ai.build_prompt(SUMMARY, [dict(HEADLINES[0], title=f"story {n}") for n in range(50)])
+    assert "story 7" in prompt and "story 8" not in prompt
+
+
+def test_the_prompt_admits_when_positions_are_not_marked_to_market():
+    """Net P&L equals realised P&L when no live price was available: say so, do not hide it."""
+    at_cost = dict(SUMMARY, marks_at_cost=True, unrealised=0.0)
+
+    told = ai.build_prompt(at_cost, [])
+    not_told = ai.build_prompt(dict(SUMMARY, marks_at_cost=False), [])
+
+    assert "valued at cost" in told
+    assert "net P&L equals realised P&L" in told
+    assert "valued at cost" not in not_told
+
+
+def test_the_summary_says_when_it_has_no_live_prices():
+    body = _client().get("/api/journal/summary").json()
+
+    assert "marks_at_cost" in body
+    assert isinstance(body["marks_at_cost"], bool)
+    # A cold market cache cannot price anything, so open positions must be flagged.
+    if body["open_positions"]:
+        assert body["marks_at_cost"] is True

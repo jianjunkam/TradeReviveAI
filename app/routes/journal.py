@@ -71,7 +71,8 @@ def summary(request: Request) -> dict:
 def summary_payload(request: Request) -> dict:
     """The figures without the gate, so /analysis sees exactly what the page displays."""
     account = request.app.state.paper.account()
-    state = account.state(_marks(request))
+    marks = _marks(request)
+    state = account.state(marks)
     fills = sorted(account.fills, key=lambda f: f.at)
     sells = [f for f in fills if f.side == "sell" and f.realised is not None]
     ages = _holding_days(fills)
@@ -211,6 +212,10 @@ def summary_payload(request: Request) -> dict:
         else None,
         "realised": state["realised"],
         "unrealised": state["unrealised"],
+        #: True when there are open positions but no live price for them, so the unrealised
+        #: figure is zero by default rather than by fact. The page and the AI prompt must say
+        #: so: "net P&L" then equals realised P&L, and a reader would not know why.
+        "marks_at_cost": bool(state["positions"]) and not marks,
         "win_rate": round(win_rate, 1) if win_rate is not None else None,
         "profit_factor": round(profit_factor, 2) if profit_factor is not None else None,
         "avg_win": round(avg_win, 2) if avg_win is not None else None,
@@ -243,4 +248,30 @@ def analysis(request: Request) -> dict:
 
     # Reuse the exact arithmetic the page shows, so the model cannot see different numbers.
     figures = summary_payload(request)
-    return analyse(figures, settings).as_dict()
+
+    # Then the news for the symbols this account actually holds: a headline about AAPL is
+    # irrelevant to someone whose book is NVDA and KO.
+    account = request.app.state.paper.account()
+    symbols = _news_symbols(account)
+    news = request.app.state.news.for_symbols(symbols, limit=8) if symbols else {}
+
+    return analyse(figures, settings, news).as_dict()
+
+
+def _news_symbols(account, limit: int = 6) -> list[str]:
+    """Holdings first, then the most recently traded — Yahoo wants AAPL, not US.AAPL."""
+    ordered: list[str] = []
+    for symbol in list(account.holdings.keys()):
+        ordered.append(symbol)
+    for fill in sorted(account.fills, key=lambda f: f.at, reverse=True):
+        if fill.symbol not in ordered:
+            ordered.append(fill.symbol)
+
+    bare = [s.split(".", 1)[1] if s.startswith("US.") else s for s in ordered]
+    deduped: list[str] = []
+    for symbol in bare:
+        if symbol and symbol not in deduped:
+            deduped.append(symbol)
+        if len(deduped) >= limit:
+            break
+    return deduped
