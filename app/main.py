@@ -10,6 +10,7 @@ M3's Postgres store) can replace one piece without touching the route code.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from decimal import Decimal
@@ -42,6 +43,8 @@ from app.routes import paper as paper_routes
 from app.routes import public as public_routes
 from app.routes import trades as trade_routes
 from app.tenancy import TenancyStore
+
+logger = logging.getLogger("app.main")
 
 SESSION_COOKIE = "tr_session"
 SESSION_MAX_AGE = 8 * 60 * 60  # one working day
@@ -84,12 +87,17 @@ def create_app(
     if store is None or tenancy is None:
         if resolved.database_url:
             engine = make_engine(resolved.database_url)
-        elif resolved.environment != "development":
-            # Better to refuse to boot than to serve traffic from a process-local store
-            # that loses every trade on restart.
+        elif resolved.environment != "development" and resolved.require_sign_in:
+            # Refusing here protects real accounts: an in-memory store loses every trade on
+            # restart. It only applies when the authenticated product is actually in use.
             raise RuntimeError(
                 "DATABASE_URL is required outside development: refusing to start without "
                 "a real database."
+            )
+        elif resolved.environment != "development":
+            logger.warning(
+                "No DATABASE_URL and REQUIRE_SIGN_IN is off: serving the demo from memory. "
+                "Accounts and orders are lost on restart."
             )
     app.state.engine = engine
 

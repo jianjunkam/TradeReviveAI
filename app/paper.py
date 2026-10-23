@@ -284,6 +284,9 @@ class PaperStore:
                 return PaperAccount(
                     starting_cash=self._starting_cash, cash=self._starting_cash
                 )
+        # The marker lives in the file, not in an attribute: a second store built from the
+        # same file must also know the account came from the shipped fixture.
+        self.seeded = bool(payload.get("seeded"))
         account = PaperAccount.from_json(payload, self._starting_cash)
         account.starting_cash = _money(payload.get("starting_cash", self._starting_cash))
         return account
@@ -296,6 +299,7 @@ class PaperStore:
             payload = json.loads(Path(seed_path).read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return None
+        payload["seeded"] = True
         self.seeded = True
         # Best effort: copy it into place so orders after this point persist. A read-only
         # filesystem must not stop the app from serving the demo.
@@ -308,7 +312,9 @@ class PaperStore:
 
     def _save(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        payload = json.dumps(self._account.to_json(), indent=2)
+        document = self._account.to_json()
+        document["seeded"] = self.seeded      # read back by _load on the next boot
+        payload = json.dumps(document, indent=2)
         handle, temp = tempfile.mkstemp(dir=str(self._path.parent), suffix=".tmp")
         try:
             with os.fdopen(handle, "w", encoding="utf-8") as stream:
