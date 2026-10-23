@@ -45,7 +45,14 @@ from app.tenancy import TenancyStore
 
 SESSION_COOKIE = "tr_session"
 SESSION_MAX_AGE = 8 * 60 * 60  # one working day
-STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+STATIC_DIR = PROJECT_ROOT / "static"
+
+
+def _project_path(value: str) -> str:
+    """Anchor a configured path to the repo, not to wherever uvicorn was started."""
+    path = Path(value)
+    return str(path if path.is_absolute() else PROJECT_ROOT / path)
 
 
 def create_app(
@@ -136,8 +143,9 @@ def create_app(
     # Simulated money, real prices. The file lives on this machine so a restart keeps the
     # demo account; nothing here can reach a real trading account.
     app.state.paper = paper if paper is not None else PaperStore(
-        resolved.paper_store_path,
+        _project_path(resolved.paper_store_path),
         starting_cash=Decimal(str(resolved.paper_starting_cash)),
+        seed_path=_project_path(resolved.paper_seed_path),
     )
     app.add_middleware(
         SessionMiddleware,

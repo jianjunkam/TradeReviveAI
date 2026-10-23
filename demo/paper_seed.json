@@ -1,0 +1,1204 @@
+{
+  "starting_cash": "100000.00",
+  "cash": "84910.49",
+  "realised": "2916.48",
+  "holdings": [
+    {
+      "symbol": "US.AAPL",
+      "quantity": 13,
+      "average_cost": "332.97"
+    },
+    {
+      "symbol": "US.AMZN",
+      "quantity": 18,
+      "average_cost": "249.89"
+    },
+    {
+      "symbol": "US.TSLA",
+      "quantity": 11,
+      "average_cost": "391.06"
+    },
+    {
+      "symbol": "US.KO",
+      "quantity": 53,
+      "average_cost": "84.42"
+    },
+    {
+      "symbol": "US.PLTR",
+      "quantity": 2,
+      "average_cost": "201.72"
+    }
+  ],
+  "fills": [
+    {
+      "id": "0ec6c4cae39f",
+      "at": "2026-10-22T08:33:36+00:00",
+      "symbol": "US.PLTR",
+      "side": "buy",
+      "quantity": 2,
+      "price": "201.72",
+      "cash_after": "84910.49",
+      "realised": null
+    },
+    {
+      "id": "700332c4672c",
+      "at": "2026-07-16T15:30:00+00:00",
+      "symbol": "US.KO",
+      "side": "buy",
+      "quantity": 53,
+      "price": "84.42",
+      "cash_after": "85313.93",
+      "realised": null
+    },
+    {
+      "id": "5e511c60a8a5",
+      "at": "2026-07-15T20:00:00+00:00",
+      "symbol": "US.KO",
+      "side": "sell",
+      "quantity": 53,
+      "price": "81.96",
+      "cash_after": "89788.19",
+      "realised": "-94.87"
+    },
+    {
+      "id": "451197e0ff94",
+      "at": "2026-07-13T15:30:00+00:00",
+      "symbol": "US.KO",
+      "side": "buy",
+      "quantity": 53,
+      "price": "83.75",
+      "cash_after": "85444.31",
+      "realised": null
+    },
+    {
+      "id": "868e648edd89",
+      "at": "2026-07-14T20:00:00+00:00",
+      "symbol": "US.KO",
+      "side": "sell",
+      "quantity": 54,
+      "price": "82.59",
+      "cash_after": "89883.06",
+      "realised": "-17.28"
+    },
+    {
+      "id": "051d341ace2d",
+      "at": "2026-07-08T15:30:00+00:00",
+      "symbol": "US.KO",
+      "side": "buy",
+      "quantity": 54,
+      "price": "82.91",
+      "cash_after": "85423.20",
+      "realised": null
+    },
+    {
+      "id": "c55116048d90",
+      "at": "2026-07-10T20:00:00+00:00",
+      "symbol": "US.KO",
+      "side": "sell",
+      "quantity": 53,
+      "price": "82.99",
+      "cash_after": "89900.34",
+      "realised": "-34.45"
+    },
+    {
+      "id": "532db85c514c",
+      "at": "2026-07-02T15:30:00+00:00",
+      "symbol": "US.KO",
+      "side": "buy",
+      "quantity": 53,
+      "price": "83.64",
+      "cash_after": "85501.87",
+      "realised": null
+    },
+    {
+      "id": "c0ed14b836dd",
+      "at": "2026-07-01T20:00:00+00:00",
+      "symbol": "US.KO",
+      "side": "sell",
+      "quantity": 54,
+      "price": "80.81",
+      "cash_after": "89934.79",
+      "realised": "-72.90"
+    },
+    {
+      "id": "5cd0de1ad561",
+      "at": "2026-06-29T15:30:00+00:00",
+      "symbol": "US.KO",
+      "side": "buy",
+      "quantity": 54,
+      "price": "82.16",
+      "cash_after": "85571.05",
+      "realised": null
+    },
+    {
+      "id": "d6050143dae1",
+      "at": "2026-06-29T20:00:00+00:00",
+      "symbol": "US.KO",
+      "side": "sell",
+      "quantity": 56,
+      "price": "82.16",
+      "cash_after": "90007.69",
+      "realised": "114.24"
+    },
+    {
+      "id": "a7416fd70af5",
+      "at": "2026-06-24T15:30:00+00:00",
+      "symbol": "US.KO",
+      "side": "buy",
+      "quantity": 56,
+      "price": "80.12",
+      "cash_after": "85406.73",
+      "realised": null
+    },
+    {
+      "id": "6ef52baa849d",
+      "at": "2026-07-28T20:00:00+00:00",
+      "symbol": "US.XOM",
+      "side": "sell",
+      "quantity": 30,
+      "price": "152.06",
+      "cash_after": "89893.45",
+      "realised": "139.50"
+    },
+    {
+      "id": "05bfc144d4d4",
+      "at": "2026-07-20T15:30:00+00:00",
+      "symbol": "US.XOM",
+      "side": "buy",
+      "quantity": 30,
+      "price": "147.41",
+      "cash_after": "85331.65",
+      "realised": null
+    },
+    {
+      "id": "e73cc6602f04",
+      "at": "2026-07-17T20:00:00+00:00",
+      "symbol": "US.XOM",
+      "side": "sell",
+      "quantity": 31,
+      "price": "146.41",
+      "cash_after": "89753.95",
+      "realised": "87.73"
+    },
+    {
+      "id": "18d5af6e3a62",
+      "at": "2026-07-15T15:30:00+00:00",
+      "symbol": "US.XOM",
+      "side": "buy",
+      "quantity": 31,
+      "price": "143.58",
+      "cash_after": "85215.24",
+      "realised": null
+    },
+    {
+      "id": "67e6f74f3101",
+      "at": "2026-07-16T20:00:00+00:00",
+      "symbol": "US.XOM",
+      "side": "sell",
+      "quantity": 32,
+      "price": "145.01",
+      "cash_after": "89666.22",
+      "realised": "224.64"
+    },
+    {
+      "id": "5e47d69ffb00",
+      "at": "2026-07-10T15:30:00+00:00",
+      "symbol": "US.XOM",
+      "side": "buy",
+      "quantity": 32,
+      "price": "137.99",
+      "cash_after": "85025.90",
+      "realised": null
+    },
+    {
+      "id": "700775f5d4f4",
+      "at": "2026-07-14T20:00:00+00:00",
+      "symbol": "US.XOM",
+      "side": "sell",
+      "quantity": 31,
+      "price": "144.16",
+      "cash_after": "89441.58",
+      "realised": "104.78"
+    },
+    {
+      "id": "fe96cf434c16",
+      "at": "2026-07-07T15:30:00+00:00",
+      "symbol": "US.XOM",
+      "side": "buy",
+      "quantity": 31,
+      "price": "140.78",
+      "cash_after": "84972.62",
+      "realised": null
+    },
+    {
+      "id": "b934badeb1e6",
+      "at": "2026-07-06T20:00:00+00:00",
+      "symbol": "US.XOM",
+      "side": "sell",
+      "quantity": 33,
+      "price": "135.56",
+      "cash_after": "89336.80",
+      "realised": "5.28"
+    },
+    {
+      "id": "dad46a0be007",
+      "at": "2026-07-01T15:30:00+00:00",
+      "symbol": "US.XOM",
+      "side": "buy",
+      "quantity": 33,
+      "price": "135.40",
+      "cash_after": "84863.32",
+      "realised": null
+    },
+    {
+      "id": "03dd8b265b17",
+      "at": "2026-07-01T20:00:00+00:00",
+      "symbol": "US.XOM",
+      "side": "sell",
+      "quantity": 33,
+      "price": "135.40",
+      "cash_after": "89331.52",
+      "realised": "-8.58"
+    },
+    {
+      "id": "d9c863d63351",
+      "at": "2026-06-26T15:30:00+00:00",
+      "symbol": "US.XOM",
+      "side": "buy",
+      "quantity": 33,
+      "price": "135.66",
+      "cash_after": "84863.32",
+      "realised": null
+    },
+    {
+      "id": "fb666fadc09b",
+      "at": "2026-07-27T20:00:00+00:00",
+      "symbol": "US.JPM",
+      "side": "sell",
+      "quantity": 13,
+      "price": "354.43",
+      "cash_after": "89340.10",
+      "realised": "195.26"
+    },
+    {
+      "id": "8aeba93b50ff",
+      "at": "2026-07-17T15:30:00+00:00",
+      "symbol": "US.JPM",
+      "side": "buy",
+      "quantity": 13,
+      "price": "339.41",
+      "cash_after": "84732.51",
+      "realised": null
+    },
+    {
+      "id": "abe7022ec1dc",
+      "at": "2026-07-16T20:00:00+00:00",
+      "symbol": "US.JPM",
+      "side": "sell",
+      "quantity": 13,
+      "price": "341.45",
+      "cash_after": "89144.84",
+      "realised": "3.38"
+    },
+    {
+      "id": "a572017da665",
+      "at": "2026-07-14T15:30:00+00:00",
+      "symbol": "US.JPM",
+      "side": "buy",
+      "quantity": 13,
+      "price": "341.19",
+      "cash_after": "84705.99",
+      "realised": null
+    },
+    {
+      "id": "d2fb2d484530",
+      "at": "2026-07-15T20:00:00+00:00",
+      "symbol": "US.JPM",
+      "side": "sell",
+      "quantity": 13,
+      "price": "345.19",
+      "cash_after": "89141.46",
+      "realised": "148.07"
+    },
+    {
+      "id": "9b8027ec1a31",
+      "at": "2026-07-09T15:30:00+00:00",
+      "symbol": "US.JPM",
+      "side": "buy",
+      "quantity": 13,
+      "price": "333.80",
+      "cash_after": "84653.99",
+      "realised": null
+    },
+    {
+      "id": "f0e0cc6f57bb",
+      "at": "2026-07-13T20:00:00+00:00",
+      "symbol": "US.JPM",
+      "side": "sell",
+      "quantity": 13,
+      "price": "332.87",
+      "cash_after": "88993.39",
+      "realised": "-41.21"
+    },
+    {
+      "id": "4744f596e572",
+      "at": "2026-07-06T15:30:00+00:00",
+      "symbol": "US.JPM",
+      "side": "buy",
+      "quantity": 13,
+      "price": "336.04",
+      "cash_after": "84666.08",
+      "realised": null
+    },
+    {
+      "id": "926e23991782",
+      "at": "2026-07-02T20:00:00+00:00",
+      "symbol": "US.JPM",
+      "side": "sell",
+      "quantity": 13,
+      "price": "331.32",
+      "cash_after": "89034.60",
+      "realised": "92.04"
+    },
+    {
+      "id": "78f1608b5708",
+      "at": "2026-06-30T15:30:00+00:00",
+      "symbol": "US.JPM",
+      "side": "buy",
+      "quantity": 13,
+      "price": "324.24",
+      "cash_after": "84727.44",
+      "realised": null
+    },
+    {
+      "id": "4c779340bc2f",
+      "at": "2026-06-30T20:00:00+00:00",
+      "symbol": "US.JPM",
+      "side": "sell",
+      "quantity": 13,
+      "price": "324.24",
+      "cash_after": "88942.56",
+      "realised": "-100.36"
+    },
+    {
+      "id": "ffa090335de3",
+      "at": "2026-06-25T15:30:00+00:00",
+      "symbol": "US.JPM",
+      "side": "buy",
+      "quantity": 13,
+      "price": "331.96",
+      "cash_after": "84727.44",
+      "realised": null
+    },
+    {
+      "id": "8659ce9763ed",
+      "at": "2026-07-16T15:30:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "buy",
+      "quantity": 11,
+      "price": "391.06",
+      "cash_after": "89042.92",
+      "realised": null
+    },
+    {
+      "id": "a17932b62c64",
+      "at": "2026-07-15T20:00:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "sell",
+      "quantity": 11,
+      "price": "394.46",
+      "cash_after": "93344.58",
+      "realised": "-3.30"
+    },
+    {
+      "id": "cd5b4b566a51",
+      "at": "2026-07-13T15:30:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "buy",
+      "quantity": 11,
+      "price": "394.76",
+      "cash_after": "89005.52",
+      "realised": null
+    },
+    {
+      "id": "a69f28bc0b28",
+      "at": "2026-07-14T20:00:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "sell",
+      "quantity": 11,
+      "price": "396.18",
+      "cash_after": "93347.88",
+      "realised": "23.32"
+    },
+    {
+      "id": "27423fcb69e7",
+      "at": "2026-07-08T15:30:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "buy",
+      "quantity": 11,
+      "price": "394.06",
+      "cash_after": "88989.90",
+      "realised": null
+    },
+    {
+      "id": "2230381470a7",
+      "at": "2026-07-10T20:00:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "sell",
+      "quantity": 11,
+      "price": "407.76",
+      "cash_after": "93324.56",
+      "realised": "157.41"
+    },
+    {
+      "id": "cfc108012c57",
+      "at": "2026-07-02T15:30:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "buy",
+      "quantity": 11,
+      "price": "393.45",
+      "cash_after": "88839.20",
+      "realised": null
+    },
+    {
+      "id": "4c2cdba64eb8",
+      "at": "2026-07-01T20:00:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "sell",
+      "quantity": 10,
+      "price": "425.30",
+      "cash_after": "93167.15",
+      "realised": "134.60"
+    },
+    {
+      "id": "9e69ef72a544",
+      "at": "2026-06-29T15:30:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "buy",
+      "quantity": 10,
+      "price": "411.84",
+      "cash_after": "88914.15",
+      "realised": null
+    },
+    {
+      "id": "70e346318fd3",
+      "at": "2026-06-29T20:00:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "sell",
+      "quantity": 11,
+      "price": "411.84",
+      "cash_after": "93032.55",
+      "realised": "399.41"
+    },
+    {
+      "id": "42cd7adbbbda",
+      "at": "2026-06-24T15:30:00+00:00",
+      "symbol": "US.TSLA",
+      "side": "buy",
+      "quantity": 11,
+      "price": "375.53",
+      "cash_after": "88502.31",
+      "realised": null
+    },
+    {
+      "id": "a282b6482c63",
+      "at": "2026-07-28T20:00:00+00:00",
+      "symbol": "US.META",
+      "side": "sell",
+      "quantity": 6,
+      "price": "592.94",
+      "cash_after": "92633.14",
+      "realised": "-314.40"
+    },
+    {
+      "id": "4b415cdab9be",
+      "at": "2026-07-20T15:30:00+00:00",
+      "symbol": "US.META",
+      "side": "buy",
+      "quantity": 6,
+      "price": "645.34",
+      "cash_after": "89075.50",
+      "realised": null
+    },
+    {
+      "id": "837cf861d420",
+      "at": "2026-07-17T20:00:00+00:00",
+      "symbol": "US.META",
+      "side": "sell",
+      "quantity": 6,
+      "price": "645.50",
+      "cash_after": "92947.54",
+      "realised": "-211.62"
+    },
+    {
+      "id": "5d2b0e85dcc8",
+      "at": "2026-07-15T15:30:00+00:00",
+      "symbol": "US.META",
+      "side": "buy",
+      "quantity": 6,
+      "price": "680.77",
+      "cash_after": "89074.54",
+      "realised": null
+    },
+    {
+      "id": "cba8a59aae06",
+      "at": "2026-07-16T20:00:00+00:00",
+      "symbol": "US.META",
+      "side": "sell",
+      "quantity": 6,
+      "price": "664.02",
+      "cash_after": "93159.16",
+      "realised": "-27.96"
+    },
+    {
+      "id": "ea233bd36f18",
+      "at": "2026-07-10T15:30:00+00:00",
+      "symbol": "US.META",
+      "side": "buy",
+      "quantity": 6,
+      "price": "668.68",
+      "cash_after": "89175.04",
+      "realised": null
+    },
+    {
+      "id": "0a7fef5d4d85",
+      "at": "2026-07-14T20:00:00+00:00",
+      "symbol": "US.META",
+      "side": "sell",
+      "quantity": 7,
+      "price": "660.52",
+      "cash_after": "93187.12",
+      "realised": "318.01"
+    },
+    {
+      "id": "dcd13cc07dbb",
+      "at": "2026-07-07T15:30:00+00:00",
+      "symbol": "US.META",
+      "side": "buy",
+      "quantity": 7,
+      "price": "615.09",
+      "cash_after": "88563.48",
+      "realised": null
+    },
+    {
+      "id": "02e0d350c118",
+      "at": "2026-07-06T20:00:00+00:00",
+      "symbol": "US.META",
+      "side": "sell",
+      "quantity": 7,
+      "price": "599.82",
+      "cash_after": "92869.11",
+      "realised": "-88.27"
+    },
+    {
+      "id": "f174048eb6a3",
+      "at": "2026-07-01T15:30:00+00:00",
+      "symbol": "US.META",
+      "side": "buy",
+      "quantity": 7,
+      "price": "612.43",
+      "cash_after": "88670.37",
+      "realised": null
+    },
+    {
+      "id": "fab6994e2b4e",
+      "at": "2026-07-01T20:00:00+00:00",
+      "symbol": "US.META",
+      "side": "sell",
+      "quantity": 8,
+      "price": "612.43",
+      "cash_after": "92957.38",
+      "realised": "500.88"
+    },
+    {
+      "id": "108b06f92775",
+      "at": "2026-06-26T15:30:00+00:00",
+      "symbol": "US.META",
+      "side": "buy",
+      "quantity": 8,
+      "price": "549.82",
+      "cash_after": "88057.94",
+      "realised": null
+    },
+    {
+      "id": "0b47dd7cad53",
+      "at": "2026-07-27T20:00:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "sell",
+      "quantity": 12,
+      "price": "326.35",
+      "cash_after": "92456.50",
+      "realised": "-242.40"
+    },
+    {
+      "id": "7f5ef3444321",
+      "at": "2026-07-17T15:30:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "buy",
+      "quantity": 12,
+      "price": "346.55",
+      "cash_after": "88540.30",
+      "realised": null
+    },
+    {
+      "id": "a35d1a06e608",
+      "at": "2026-07-16T20:00:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "sell",
+      "quantity": 12,
+      "price": "354.23",
+      "cash_after": "92698.90",
+      "realised": "-60.60"
+    },
+    {
+      "id": "b325f6440dd7",
+      "at": "2026-07-14T15:30:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "buy",
+      "quantity": 12,
+      "price": "359.28",
+      "cash_after": "88448.14",
+      "realised": null
+    },
+    {
+      "id": "1f31cce8d299",
+      "at": "2026-07-15T20:00:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "sell",
+      "quantity": 12,
+      "price": "370.68",
+      "cash_after": "92759.50",
+      "realised": "144.24"
+    },
+    {
+      "id": "3a36d89c201d",
+      "at": "2026-07-09T15:30:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "buy",
+      "quantity": 12,
+      "price": "358.66",
+      "cash_after": "88311.34",
+      "realised": null
+    },
+    {
+      "id": "5c54cbdcfeca",
+      "at": "2026-07-13T20:00:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "sell",
+      "quantity": 12,
+      "price": "352.28",
+      "cash_after": "92615.26",
+      "realised": "-167.28"
+    },
+    {
+      "id": "ea7f5ac3e362",
+      "at": "2026-07-06T15:30:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "buy",
+      "quantity": 12,
+      "price": "366.22",
+      "cash_after": "88387.90",
+      "realised": null
+    },
+    {
+      "id": "cbe4aa3933ec",
+      "at": "2026-07-02T20:00:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "sell",
+      "quantity": 12,
+      "price": "359.68",
+      "cash_after": "92782.54",
+      "realised": "30.48"
+    },
+    {
+      "id": "32b14811b441",
+      "at": "2026-06-30T15:30:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "buy",
+      "quantity": 12,
+      "price": "357.14",
+      "cash_after": "88466.38",
+      "realised": null
+    },
+    {
+      "id": "0b470e35ad6f",
+      "at": "2026-06-30T20:00:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "sell",
+      "quantity": 13,
+      "price": "357.14",
+      "cash_after": "92752.06",
+      "realised": "177.45"
+    },
+    {
+      "id": "bb0f21044223",
+      "at": "2026-06-25T15:30:00+00:00",
+      "symbol": "US.GOOGL",
+      "side": "buy",
+      "quantity": 13,
+      "price": "343.49",
+      "cash_after": "88109.24",
+      "realised": null
+    },
+    {
+      "id": "9668112a61b5",
+      "at": "2026-07-16T15:30:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "buy",
+      "quantity": 18,
+      "price": "249.89",
+      "cash_after": "92574.61",
+      "realised": null
+    },
+    {
+      "id": "63bbab5e53cd",
+      "at": "2026-07-15T20:00:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "sell",
+      "quantity": 18,
+      "price": "254.96",
+      "cash_after": "97072.63",
+      "realised": "137.70"
+    },
+    {
+      "id": "d9ff38368e9b",
+      "at": "2026-07-13T15:30:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "buy",
+      "quantity": 18,
+      "price": "247.31",
+      "cash_after": "92483.35",
+      "realised": null
+    },
+    {
+      "id": "bce3a6581ea7",
+      "at": "2026-07-14T20:00:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "sell",
+      "quantity": 18,
+      "price": "247.49",
+      "cash_after": "96934.93",
+      "realised": "69.66"
+    },
+    {
+      "id": "22897ba1dbcf",
+      "at": "2026-07-08T15:30:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "buy",
+      "quantity": 18,
+      "price": "243.62",
+      "cash_after": "92480.11",
+      "realised": null
+    },
+    {
+      "id": "2bc237555bbb",
+      "at": "2026-07-10T20:00:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "sell",
+      "quantity": 18,
+      "price": "245.34",
+      "cash_after": "96865.27",
+      "realised": "48.06"
+    },
+    {
+      "id": "b272e94c9dae",
+      "at": "2026-07-02T15:30:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "buy",
+      "quantity": 18,
+      "price": "242.67",
+      "cash_after": "92449.15",
+      "realised": null
+    },
+    {
+      "id": "f6a7e84355e7",
+      "at": "2026-07-01T20:00:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "sell",
+      "quantity": 18,
+      "price": "241.70",
+      "cash_after": "96817.21",
+      "realised": "28.08"
+    },
+    {
+      "id": "faa653b87c3d",
+      "at": "2026-06-29T15:30:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "buy",
+      "quantity": 18,
+      "price": "240.14",
+      "cash_after": "92466.61",
+      "realised": null
+    },
+    {
+      "id": "ee7c90c04c33",
+      "at": "2026-06-29T20:00:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "sell",
+      "quantity": 19,
+      "price": "240.14",
+      "cash_after": "96789.13",
+      "realised": "111.53"
+    },
+    {
+      "id": "d5d658a332d0",
+      "at": "2026-06-24T15:30:00+00:00",
+      "symbol": "US.AMZN",
+      "side": "buy",
+      "quantity": 19,
+      "price": "234.27",
+      "cash_after": "92226.47",
+      "realised": null
+    },
+    {
+      "id": "9835c9a36557",
+      "at": "2026-07-28T20:00:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "sell",
+      "quantity": 22,
+      "price": "196.79",
+      "cash_after": "96677.60",
+      "realised": "-137.72"
+    },
+    {
+      "id": "3f89af666937",
+      "at": "2026-07-20T15:30:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "buy",
+      "quantity": 22,
+      "price": "203.05",
+      "cash_after": "92348.22",
+      "realised": null
+    },
+    {
+      "id": "eab3cda6eeb5",
+      "at": "2026-07-17T20:00:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "sell",
+      "quantity": 21,
+      "price": "202.58",
+      "cash_after": "96815.32",
+      "realised": "-203.28"
+    },
+    {
+      "id": "fbf8104c420b",
+      "at": "2026-07-15T15:30:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "buy",
+      "quantity": 21,
+      "price": "212.26",
+      "cash_after": "92561.14",
+      "realised": null
+    },
+    {
+      "id": "a14251f89f41",
+      "at": "2026-07-16T20:00:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "sell",
+      "quantity": 21,
+      "price": "207.17",
+      "cash_after": "97018.60",
+      "realised": "-74.55"
+    },
+    {
+      "id": "f4066a63c875",
+      "at": "2026-07-10T15:30:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "buy",
+      "quantity": 21,
+      "price": "210.72",
+      "cash_after": "92668.03",
+      "realised": null
+    },
+    {
+      "id": "823c76f86408",
+      "at": "2026-07-14T20:00:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "sell",
+      "quantity": 22,
+      "price": "211.56",
+      "cash_after": "97093.15",
+      "realised": "326.70"
+    },
+    {
+      "id": "c0a467970ddc",
+      "at": "2026-07-07T15:30:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "buy",
+      "quantity": 22,
+      "price": "196.71",
+      "cash_after": "92438.83",
+      "realised": null
+    },
+    {
+      "id": "9bb3cedb15ab",
+      "at": "2026-07-06T20:00:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "sell",
+      "quantity": 22,
+      "price": "195.33",
+      "cash_after": "96766.45",
+      "realised": "-44.66"
+    },
+    {
+      "id": "c8778b8e4e25",
+      "at": "2026-07-01T15:30:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "buy",
+      "quantity": 22,
+      "price": "197.36",
+      "cash_after": "92469.19",
+      "realised": null
+    },
+    {
+      "id": "d4b41e5db5f6",
+      "at": "2026-07-01T20:00:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "sell",
+      "quantity": 23,
+      "price": "197.36",
+      "cash_after": "96811.11",
+      "realised": "116.15"
+    },
+    {
+      "id": "debf5fe29aec",
+      "at": "2026-06-26T15:30:00+00:00",
+      "symbol": "US.NVDA",
+      "side": "buy",
+      "quantity": 23,
+      "price": "192.31",
+      "cash_after": "92271.83",
+      "realised": null
+    },
+    {
+      "id": "4d93b7b20da9",
+      "at": "2026-07-27T20:00:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "sell",
+      "quantity": 11,
+      "price": "388.37",
+      "cash_after": "96694.96",
+      "realised": "-51.81"
+    },
+    {
+      "id": "e21a119fd922",
+      "at": "2026-07-17T15:30:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "buy",
+      "quantity": 11,
+      "price": "393.08",
+      "cash_after": "92422.89",
+      "realised": null
+    },
+    {
+      "id": "dc7f9e4bca5e",
+      "at": "2026-07-16T20:00:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "sell",
+      "quantity": 11,
+      "price": "400.35",
+      "cash_after": "96746.77",
+      "realised": "177.54"
+    },
+    {
+      "id": "1f6727d31976",
+      "at": "2026-07-14T15:30:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "buy",
+      "quantity": 11,
+      "price": "384.21",
+      "cash_after": "92342.92",
+      "realised": null
+    },
+    {
+      "id": "23289987d283",
+      "at": "2026-07-15T20:00:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "sell",
+      "quantity": 11,
+      "price": "394.89",
+      "cash_after": "96569.23",
+      "realised": "123.75"
+    },
+    {
+      "id": "7ec128a2ab96",
+      "at": "2026-07-09T15:30:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "buy",
+      "quantity": 11,
+      "price": "383.64",
+      "cash_after": "92225.44",
+      "realised": null
+    },
+    {
+      "id": "d6f2eaa78ded",
+      "at": "2026-07-13T20:00:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "sell",
+      "quantity": 11,
+      "price": "390.26",
+      "cash_after": "96445.48",
+      "realised": "46.75"
+    },
+    {
+      "id": "2f7c4bc0d6fc",
+      "at": "2026-07-06T15:30:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "buy",
+      "quantity": 11,
+      "price": "386.01",
+      "cash_after": "92152.62",
+      "realised": null
+    },
+    {
+      "id": "c5b257f5bb2f",
+      "at": "2026-07-02T20:00:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "sell",
+      "quantity": 12,
+      "price": "389.76",
+      "cash_after": "96398.73",
+      "realised": "209.28"
+    },
+    {
+      "id": "03f41cf2b78d",
+      "at": "2026-06-30T15:30:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "buy",
+      "quantity": 12,
+      "price": "372.32",
+      "cash_after": "91721.61",
+      "realised": null
+    },
+    {
+      "id": "e63f18b2762c",
+      "at": "2026-06-30T20:00:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "sell",
+      "quantity": 12,
+      "price": "372.32",
+      "cash_after": "96189.45",
+      "realised": "241.80"
+    },
+    {
+      "id": "cfc87b7f405a",
+      "at": "2026-06-25T15:30:00+00:00",
+      "symbol": "US.MSFT",
+      "side": "buy",
+      "quantity": 12,
+      "price": "352.17",
+      "cash_after": "91721.61",
+      "realised": null
+    },
+    {
+      "id": "9e2a78d42276",
+      "at": "2026-07-16T15:30:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "buy",
+      "quantity": 13,
+      "price": "332.97",
+      "cash_after": "95947.65",
+      "realised": null
+    },
+    {
+      "id": "2ee7a1d464e2",
+      "at": "2026-07-15T20:00:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "sell",
+      "quantity": 14,
+      "price": "327.22",
+      "cash_after": "100276.26",
+      "realised": "142.52"
+    },
+    {
+      "id": "54815996f112",
+      "at": "2026-07-13T15:30:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "buy",
+      "quantity": 14,
+      "price": "317.04",
+      "cash_after": "95695.18",
+      "realised": null
+    },
+    {
+      "id": "af37906e3236",
+      "at": "2026-07-14T20:00:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "sell",
+      "quantity": 14,
+      "price": "314.59",
+      "cash_after": "100133.74",
+      "realised": "20.58"
+    },
+    {
+      "id": "2e13e0353014",
+      "at": "2026-07-08T15:30:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "buy",
+      "quantity": 14,
+      "price": "313.12",
+      "cash_after": "95729.48",
+      "realised": null
+    },
+    {
+      "id": "a696aa17568e",
+      "at": "2026-07-10T20:00:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "sell",
+      "quantity": 14,
+      "price": "315.05",
+      "cash_after": "100113.16",
+      "realised": "93.66"
+    },
+    {
+      "id": "817eb11c78d8",
+      "at": "2026-07-02T15:30:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "buy",
+      "quantity": 14,
+      "price": "308.36",
+      "cash_after": "95702.46",
+      "realised": null
+    },
+    {
+      "id": "ad0b66e561c5",
+      "at": "2026-07-01T20:00:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "sell",
+      "quantity": 15,
+      "price": "294.13",
+      "cash_after": "100019.50",
+      "realised": "189.45"
+    },
+    {
+      "id": "32397faf071b",
+      "at": "2026-06-29T15:30:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "buy",
+      "quantity": 15,
+      "price": "281.50",
+      "cash_after": "95607.55",
+      "realised": null
+    },
+    {
+      "id": "725ea13a8a0e",
+      "at": "2026-06-29T20:00:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "sell",
+      "quantity": 15,
+      "price": "281.50",
+      "cash_after": "99830.05",
+      "realised": "-169.95"
+    },
+    {
+      "id": "c51446f550ad",
+      "at": "2026-06-24T15:30:00+00:00",
+      "symbol": "US.AAPL",
+      "side": "buy",
+      "quantity": 15,
+      "price": "292.83",
+      "cash_after": "95607.55",
+      "realised": null
+    }
+  ]
+}

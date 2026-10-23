@@ -192,6 +192,9 @@ def summary(request: Request) -> dict:
     return {
         "source": "paper",
         "simulated": True,
+        #: True when the account was loaded from demo/paper_seed.json — the money is
+        #: pretend and the fills are historical, so the page must say "sample".
+        "seeded": getattr(request.app.state.paper, "seeded", False),
         "closed_trades": trade_count,
         "open_positions": len(state["positions"]),
         "starting_cash": state["starting_cash"],

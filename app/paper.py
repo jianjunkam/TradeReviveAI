@@ -262,22 +262,49 @@ class PaperAccount:
 class PaperStore:
     """The account, plus a JSON file so a restart does not wipe the demo."""
 
-    def __init__(self, path: str | Path, starting_cash: Decimal = Decimal("100000.00")) -> None:
+    def __init__(
+        self,
+        path: str | Path,
+        starting_cash: Decimal = Decimal("100000.00"),
+        seed_path: str | Path | None = None,
+    ) -> None:
         self._path = Path(path)
         self._starting_cash = _money(starting_cash)
         self._lock = threading.Lock()
-        self._account = self._load()
+        #: True when the account came from the shipped fixture rather than from trading.
+        self.seeded = False
+        self._account = self._load(seed_path)
 
-    def _load(self) -> PaperAccount:
+    def _load(self, seed_path: str | Path | None = None) -> PaperAccount:
         try:
             payload = json.loads(self._path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            return PaperAccount(
-                starting_cash=self._starting_cash, cash=self._starting_cash
-            )
+            payload = self._read_seed(seed_path)
+            if payload is None:
+                return PaperAccount(
+                    starting_cash=self._starting_cash, cash=self._starting_cash
+                )
         account = PaperAccount.from_json(payload, self._starting_cash)
         account.starting_cash = _money(payload.get("starting_cash", self._starting_cash))
         return account
+
+    def _read_seed(self, seed_path: str | Path | None) -> dict | None:
+        """A hosted demo has no broker, so it cannot generate history. Ship one instead."""
+        if not seed_path:
+            return None
+        try:
+            payload = json.loads(Path(seed_path).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        self.seeded = True
+        # Best effort: copy it into place so orders after this point persist. A read-only
+        # filesystem must not stop the app from serving the demo.
+        try:
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+            self._path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+        return payload
 
     def _save(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)

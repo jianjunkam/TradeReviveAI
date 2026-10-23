@@ -303,7 +303,8 @@
     $("journal-sub").textContent =
       data.closed_trades + " closed trades · " + data.open_positions + " open · " +
       "equity " + money(data.equity);
-    $("journal-source-tag").textContent = data.simulated ? "paper account" : "live account";
+    $("journal-source-tag").textContent = data.seeded ? "sample account · real prices"
+      : data.simulated ? "paper account" : "live account";
   }
 
   function load() {

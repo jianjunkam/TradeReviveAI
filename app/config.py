@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     #: Paper-trading account: simulated cash, real prices, stored on this machine.
     paper_starting_cash: float = 100000.0
     paper_store_path: str = "data/paper.json"
+    #: Loaded only when paper_store_path is missing: lets a host with no broker still
+    #: show a populated journal. Fills are real historical prices, the money is not real.
+    paper_seed_path: str = "demo/paper_seed.json"
 
     # Required from M3 (data model) onwards; optional while the skeleton has no tables.
     database_url: str | None = None

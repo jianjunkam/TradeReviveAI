@@ -234,6 +234,22 @@
       .then(function () {
         $("paper-conn").textContent = "simulated";
         $("paper-conn").style.cssText = "background:#fef3c7;color:#92400e";
+        // A hosted demo with no broker loads demo/paper_seed.json: say so.
+        return fetch("/api/journal/summary", { headers: { Accept: "application/json" } })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (summary) {
+            if (summary && summary.seeded) {
+              $("paper-conn").textContent = "sample account";
+              var banner = document.querySelector(".alert-sim");
+              if (banner) {
+                banner.innerHTML = '<strong>Sample account.</strong> This hosted copy has no ' +
+                  'broker connection, so it starts from a shipped set of trades at real ' +
+                  'historical prices. Orders you place here are still simulated and still stored ' +
+                  'on this server — <strong>nothing reaches a broker</strong>.';
+              }
+            }
+          })
+          .catch(function () { /* the banner is a nicety, not a requirement */ });
       });
 
     setInterval(loadAccount, 30000);
