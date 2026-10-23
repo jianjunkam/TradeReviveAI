@@ -98,7 +98,28 @@ All settings come from `.env` (see `.env.example`). The ones that matter:
 
 ---
 
-## Before hosting this publicly
+## Hosting checklist
+
+A fresh host serves the sign-in page, not the demo, until these are set:
+
+```bash
+APP_SECRET=<long random string>      # required, or the app will not start
+PUBLIC_DASHBOARD=true                # without this, / redirects to /sign-in
+ENVIRONMENT=development              # or production + DATABASE_URL
+```
+
+Two things a hosted copy will not have, by design:
+
+- **No broker.** Without OpenD the market panel says "OpenD is not listening" and the
+  screener has nothing to show. Headlines still load (Yahoo, no broker needed).
+- **No trade history.** `data/paper.json` is gitignored, so a new host has an empty journal.
+  `demo/paper_seed.json` is loaded instead on first boot — trades at real historical prices,
+  labelled "sample account" in the journal and on the papertrade page. Delete that file to
+  start from zero.
+
+---
+
+## ⚠️ Before hosting this publicly
 
 `PUBLIC_DASHBOARD=true` exposes, to **anyone who can reach the port**:
 
