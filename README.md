@@ -88,7 +88,10 @@ All settings come from `.env` (see `.env.example`). The ones that matter:
 |---|---|---|
 | `APP_SECRET` | — | **Required.** Signs the session cookie and magic links. |
 | `ENVIRONMENT` | `production` | Only `development` relaxes cookies and enables `/docs`. Deliberately safe by default. |
-| `PUBLIC_DASHBOARD` | `false` | Serve market, journal, papertrade and diagnosis without a login. |
+| `PUBLIC_DASHBOARD` | `true` | Serve market, journal, papertrade and diagnosis without a login. |
+| `REQUIRE_SIGN_IN` | `true` | Require the sign-in flow for `/app`. `false` removes the login page. |
+| `DEMO_SIGN_IN` | `true` | Show the "enter the demo account" button on the sign-in card. |
+| `PUBLIC_POSITIONS` | `false` | Include the broker account's open positions in the public API. |
 | `DATABASE_URL` | — | Required outside development. |
 | `MARKET_TOP_N` | `100` | How many stocks the dashboard lists, ranked by market value. |
 | `MARKET_REFRESH_SECONDS` | `30` | How often the market is re-read. |
@@ -108,8 +111,17 @@ ENVIRONMENT=development              # or production + DATABASE_URL
 ```
 
 The demo pages are public by default, so `/` is the dashboard with no further setup.
-`PUBLIC_DASHBOARD=false` puts the sign-in page back in front of them; `PUBLIC_POSITIONS=true`
-adds your broker account's open positions to `/api/public/market`.
+
+To remove the login page entirely — `/app` opens as the demo account and `/sign-in` redirects
+into the workspace — set:
+
+```bash
+REQUIRE_SIGN_IN=false
+```
+
+Without it, `/app` still asks for the sign-in flow (the product's real behaviour, and what the
+M1 acceptance tests assert). `PUBLIC_DASHBOARD=false` closes the demo pages; and
+`PUBLIC_POSITIONS=true` adds your broker account's open positions to `/api/public/market`.
 
 Two things a hosted copy will not have, by design:
 

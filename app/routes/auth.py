@@ -18,6 +18,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from pydantic import BaseModel
 
 from app.auth import sessions, twofa
+from app.auth.demo import DEMO_EMAIL, ensure_demo_session
 from app.auth.google import GoogleSignInError, GoogleProvider
 from app.auth.store import AuthStore, User
 from app.auth.throttle import Throttle
@@ -183,6 +184,9 @@ def _sign_in_page(
 @public
 def sign_in_page(request: Request) -> Response:
     settings = request.app.state.settings
+    if not settings.require_sign_in:
+        # There is no login page when sign-in is off: go straight into the workspace.
+        return RedirectResponse("/app", status_code=303)
     dev = settings.environment == "development"
     demo = settings.demo_sign_in
     user = sessions.current_user(request)
@@ -258,21 +262,8 @@ def demo_sign_in(request: Request) -> Response:
     if not settings.demo_sign_in:
         raise HTTPException(status_code=404, detail="Not found.")
 
-    store = _store(request)
-    user = store.get_user_by_email(DEMO_EMAIL)
-    if user is None:
-        user = store.upsert_user(
-            email=DEMO_EMAIL,
-            name="Demo trader",
-            provider="demo",
-            email_verified=True,
-        )
-    elif not user.email_verified:
-        user.email_verified = True
-        store.save_user(user)
-
     # Both factors are deliberately satisfied: that is the whole point of the button.
-    sessions.start(request, user, mfa_verified=True)
+    user = ensure_demo_session(request)
     _safe_log("demo_sign_in", user)
     return RedirectResponse("/app", status_code=303)
 

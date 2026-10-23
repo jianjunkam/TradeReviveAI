@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     #: On by default: these are the product demo, and a host that forgets an env var should
     #: still show the product rather than a login card nobody can get past.
     public_dashboard: bool = True
+    #: Put the login flow in front of /app. True by default: that is what the product
+    #: does, and M1 asserts it. The demo env file sets it false so a reviewer lands inside.
+    require_sign_in: bool = True
     #: A "sign in as the demo account" button that skips the email link and 2FA.
     #: There is no mail provider wired, so without this a hosted copy has no way in.
     #: Set false to remove the button and keep the email + passcode flow only.

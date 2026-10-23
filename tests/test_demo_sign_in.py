@@ -14,13 +14,18 @@ from app.main import create_app
 from app.market import MarketCache
 
 
-def _client(demo_sign_in: bool = True, environment: str = "development") -> TestClient:
+def _client(
+    demo_sign_in: bool = True,
+    environment: str = "development",
+    require_sign_in: bool = True,
+) -> TestClient:
     broker = FakeBroker()
     app = create_app(
         settings=Settings(
             app_secret="test-only",
             environment=environment,
             demo_sign_in=demo_sign_in,
+            require_sign_in=require_sign_in,
         ),
         broker=broker,
         market=MarketCache(broker),
@@ -73,3 +78,36 @@ def test_the_same_account_is_reused_across_sign_ins():
     tenant_second = client.get("/app").text.split('data-tenant="')[1].split('"')[0]
 
     assert tenant_first == tenant_second
+
+
+# ------------------------------------------------------- no login page at all
+
+
+def test_with_sign_in_off_the_workspace_is_the_entry_point():
+    """REQUIRE_SIGN_IN=false: no login page, /app just opens."""
+    client = _client(require_sign_in=False)
+
+    assert client.get("/app").status_code == 200
+    # And the login page is not a page any more: it goes into the workspace.
+    response = client.get("/sign-in")
+    assert response.status_code == 303
+    assert response.headers["location"] == "/app"
+
+
+def test_with_sign_in_off_the_visitor_is_the_demo_account():
+    client = _client(require_sign_in=False)
+
+    first = client.get("/app").text.split('data-tenant="')[1].split('"')[0]
+    other = _client(require_sign_in=False).get("/app").text.split('data-tenant="')[1].split('"')[0]
+
+    assert first == other
+
+
+def test_with_sign_in_on_the_login_page_still_guards_the_workspace():
+    client = _client(require_sign_in=True)
+
+    refused = client.get("/app")
+
+    assert refused.status_code == 303
+    assert refused.headers["location"] == "/sign-in"
+    assert client.get("/sign-in").status_code == 200

@@ -16,6 +16,7 @@ from typing import Callable, Final
 from fastapi import HTTPException, Request
 
 from app.auth import sessions
+from app.auth.demo import ensure_demo_session
 from app.auth.store import ADMIN, GUEST, TRADER
 
 __all__ = [
@@ -163,6 +164,12 @@ def guard(request: Request) -> None:
         )
     if declared is PUBLIC:
         return
+
+    # No login page on a demo deployment: every visitor is the one demo account, so routes
+    # that require a signed-in user behave as if someone had signed in.
+    settings = getattr(request.app.state, "settings", None)
+    if settings is not None and not getattr(settings, "require_sign_in", True):
+        ensure_demo_session(request)
 
     user = sessions.current_user(request)
     if user is None:
