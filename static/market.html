@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TradeRevive AI — US market</title>
-<meta name="description" content="Live US market analysis from moomoo OpenD: today's moves, the largest companies, and a transparent stock screen.">
+<meta name="description" content="US market analysis: today's moves, the largest companies, and a transparent stock screen.">
 <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
@@ -23,14 +23,14 @@
       <a href="/diagnosis"><span class="dot"></span><span class="label" data-i18n="nav_diagnosis">Diagnosis</span></a>
     </nav>
 
-    <footer data-i18n="m_side_footer">Live market data · moomoo OpenD</footer>
+    <footer id="m-footer">Market data</footer>
   </aside>
 
   <main class="main">
     <div class="topbar">
       <div>
         <h1 data-i18n="m_title">US market</h1>
-        <p id="m-sub" data-i18n="m_sub">Top 100 companies by market value, from your OpenD connection</p>
+        <p id="m-sub" data-i18n="m_sub">Top companies by market value</p>
       </div>
       <div class="controls">
         <span class="tag" id="m-status" style="background:#f1f5f9;color:#475569">connecting…</span>
@@ -49,7 +49,7 @@
     <section class="grid split" style="margin-top:16px">
       <div class="card" id="moves-card">
         <h2 data-i18n="m_dist">Today's moves</h2>
-        <p class="sub" data-i18n="m_dist_sub">How many of the 100 are up, flat or down</p>
+        <p class="sub" id="m-dist-sub" data-i18n="m_dist_sub">How many are up, flat or down</p>
         <div class="chart-box"><canvas id="chart-dist" aria-label="Distribution of daily change"></canvas></div>
       </div>
       <div class="card news-card">
@@ -120,7 +120,7 @@
     </section>
 
     <p class="disclaimer" data-i18n="m_disclaimer">
-      Market data is provided by moomoo OpenD for information only. It is not financial advice,
+      Market data is provided for information only. It is not financial advice,
       not a prediction, and not a recommendation. Verify every number with your broker before acting.
     </p>
   </main>

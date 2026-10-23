@@ -64,6 +64,7 @@ def _check_symbol(symbol: str) -> str:
 
 
 class MoomooBroker:
+    SOURCE = "moomoo OpenD"
     """Read-only access to what OpenD is reporting."""
 
     def __init__(

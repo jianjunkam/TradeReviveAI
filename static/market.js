@@ -1,4 +1,4 @@
-/* US market dashboard: real numbers from moomoo OpenD via /api/public/us/market.
+/* US market dashboard: real numbers from the configured feed via /api/public/us/market.
 
    Every figure on this page is what the broker reported. Nothing is estimated, and a
    missing price stays "—". The screen below the charts is a *filter with visible rules*,
@@ -11,9 +11,9 @@
       brand_sub: "Trading recovery platform",
       nav_dashboard: "Dashboard", nav_journal: "Trade journal", nav_papertrade: "Papertrade",
       nav_diagnosis: "Diagnosis",
-      m_side_footer: "Live market data · moomoo OpenD",
+      m_side_footer: "Market data",
       m_title: "US market",
-      m_sub: "Top 100 companies by market value, from your OpenD connection",
+      m_sub: "Top companies by market value",
       m_dist: "Today's moves",
       m_dist_sub: "How many of the 100 are up, flat or down",
       m_news: "Market news",
@@ -311,7 +311,14 @@
 
     var ready = data.ready;
     var offline = !ready && !!data.error;
-    status.textContent = ready ? t("m_live") : offline ? t("m_offline") : t("m_warming");
+    var webFeed = /yahoo/i.test(data.source || "");
+    // A broker socket is "live". A web feed is not, whatever its numbers look like.
+    status.textContent = ready
+      ? (webFeed ? "Yahoo · may be delayed" : t("m_live"))
+      : offline ? t("m_offline") : t("m_warming");
+    status.title = webFeed
+      ? "Yahoo's feed can be delayed by up to 15 minutes. It is not an exchange feed."
+      : "";
     status.style.background = ready ? "#ecfdf5" : offline ? "#fef2f2" : "#f1f5f9";
     status.style.color = ready ? "#047857" : offline ? "#991b1b" : "#475569";
 
@@ -377,6 +384,10 @@
         if (!response.ok) throw new Error("Market request failed (" + response.status + ").");
         return response.json();
       })
+      .then(function (payload) {
+        applySource(payload);
+        return payload;
+      })
       .then(function (payload) { data = payload; error = null; render(); retryIfWarming(); })
       .catch(function (err) { data = null; error = err.message; render(); retryIfWarming(); });
   }
@@ -397,6 +408,29 @@
     $("lang-en").setAttribute("aria-pressed", String(next === "en"));
     $("lang-ms").setAttribute("aria-pressed", String(next === "ms"));
     if (data && data.ready) render();
+  }
+
+  // Name the feed that is actually serving prices, rather than the one we used last week.
+  function applySource(payload) {
+    var source = (payload && payload.source) || "market data";
+    var sub = $("m-sub");
+    if (sub && payload && payload.total) {
+      sub.textContent = "The largest US companies by market value — " + payload.total +
+        " priced now, from " + source;
+    }
+    var dist = $("m-dist-sub");
+    if (dist && payload && payload.total) {
+      dist.textContent = "How many of the " + payload.total + " are up, flat or down";
+    }
+    var footer = $("m-footer");
+    if (footer) footer.textContent = "Market data · " + source;
+    // The status tag says "live" when a broker socket is up. Yahoo is a web feed and can
+    // lag by up to fifteen minutes, so it must not wear the same word.
+    var badge = $("m-status");
+    if (badge && /yahoo/i.test(source)) {
+      badge.textContent = "Yahoo · may be delayed";
+      badge.title = "Yahoo's feed can be delayed by up to 15 minutes. It is not an exchange feed.";
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {

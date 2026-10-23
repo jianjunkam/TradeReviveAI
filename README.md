@@ -96,6 +96,7 @@ All settings come from `.env` (see `.env.example`). The ones that matter:
 | `APP_SECRET` | — | **Required.** Signs the session cookie and magic links. |
 | `ENVIRONMENT` | `production` | Only `development` relaxes cookies and enables `/docs`. Deliberately safe by default. |
 | `DEMO_CLOSED` | `false` | Set `true` to close the demo pages and serve the sign-in card. |
+| `DATA_SOURCE` | `moomoo` | `yahoo` serves prices over HTTPS with no OpenD — for a server that cannot run it. |
 | `DEEPSEEK_API_KEY` | — | Key for the journal's AI section. Empty → Flowise fallback → "no model configured". |
 | `REQUIRE_SIGN_IN` | `true` | Require the sign-in flow for `/app`. `false` removes the login page. |
 | `DEMO_SIGN_IN` | `true` | Show the "enter the demo account" button on the sign-in card. |
@@ -234,3 +235,25 @@ requirements and the acceptance tests.
 Coursework project. Market data © moomoo / Futu, served through your own OpenD gateway. The
 diagnosis assistant runs on a separate Flowise instance. Not financial advice.
 
+
+## Market data: two sources, one switch
+
+`DATA_SOURCE=moomoo` reads your own OpenD gateway: real-time, your quotes, one signed-in
+session per account, and the login IP decides the entitlement. `DATA_SOURCE=yahoo` reads
+Yahoo Finance over HTTPS with no account at all, which is what a hosted deployment needs.
+
+| | moomoo / OpenD | Yahoo Finance |
+|---|---|---|
+| Setup | Native SDK, signed-in gateway | None — HTTPS only |
+| Where it runs | Must sit beside the account | Any server |
+| Price delay | Real-time on your tier | Yahoo's own; the page says **"may be delayed"** |
+| Universe | Whole exchange (~13k tickers) | Yahoo screener, top 100 by market cap |
+| Bid / ask | Yes | Yes, when Yahoo publishes them |
+| Broker positions | Yes | None — paper trading keeps its own book |
+| Contract | Vendor API | Unofficial; can change or break without notice |
+
+Everything above the broker — the cache, the screen, the journal, papertrading — is source
+agnostic: the switch picks which class in `app/broker/` answers.
+
+Honesty rules that hold for both: a missing price renders `—`, never `0.00%`; a source that
+cannot be reached says so instead of showing yesterday's number as today's.

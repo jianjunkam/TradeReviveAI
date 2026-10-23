@@ -27,6 +27,7 @@ from app.auth.pg_store import PostgresAuthStore
 from app.auth.store import AuthStore, InMemoryAuthStore
 from app.broker.base import Broker
 from app.broker.moomoo import MoomooBroker
+from app.broker.yahoo import YahooBroker
 from app.config import Settings, get_settings
 from app.db import make_engine
 from app.market import MarketCache
@@ -125,17 +126,19 @@ def create_app(
     app.state.clock = clock or (lambda: datetime.now(timezone.utc))
     # The broker only ever reads: construction opens no connection, and every call either
     # returns what OpenD reported or raises BrokerUnavailable.
-    app.state.broker = (
-        broker
-        if broker is not None
-        else MoomooBroker(
+    def _market_data():
+        if resolved.data_source.strip().lower() == "yahoo":
+            return YahooBroker(timeout=resolved.yahoo_timeout, universe_size=resolved.market_top_n)
+        return MoomooBroker(
             resolved.opend_host,
             resolved.opend_port,
             market=resolved.opend_market,
             trade_market=resolved.opend_trade_market,
             trade_env=resolved.opend_trade_env,
         )
-    )
+
+    app.state.broker = broker if broker is not None else _market_data()
+    logger.info("market data source: %s", resolved.data_source)
 
     # One sweep of the whole US market, refreshed on a timer and served from memory:
     # 7,000 snapshots per page view is not possible, and sorting across the market needs

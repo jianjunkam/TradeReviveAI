@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     opend_trade_market: str = "US"
     opend_trade_env: str = "SIMULATE"
 
+    #: Where prices come from: "moomoo" (OpenD, needs a signed-in account on the same
+    #: machine) or "yahoo" (HTTPS, no account — for a server that cannot run OpenD).
+    data_source: str = "moomoo"
+    yahoo_timeout: float = 12.0
+
     #: Close the demo pages (market, journal, papertrade, diagnosis) and serve the sign-in
     #: card instead. Off by default, because a demo that nobody can open is not a demo.
     demo_closed: bool = False

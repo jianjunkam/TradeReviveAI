@@ -233,6 +233,7 @@ class MarketCache:
             "sort": key,
             "descending": descending,
             "breadth": self.breadth(),
+            "source": getattr(self._broker, "SOURCE", "market data"),
             "universe_size": snap.universe_size,
             "loaded_at": snap.loaded_at.isoformat() if snap.loaded_at else None,
             "age_seconds": snap.age_seconds(),

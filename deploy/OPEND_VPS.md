@@ -1,3 +1,9 @@
+> **Do you actually need OpenD on the server?** If the host cannot run a signed-in
+> gateway (shared hosting, no GUI, no credentials on a third-party box), set
+> `DATA_SOURCE=yahoo` and the demo runs on Yahoo Finance over HTTPS instead: same
+> pages, no account, prices possibly delayed. Everything below applies only if you
+> want *your* real-time moomoo entitlement on that machine.
+
 # Running OpenD on a VPS, and why the demo may still differ
 
 OpenD is a gateway, not a desktop-only app: moomoo ships CentOS and Ubuntu builds for exactly
