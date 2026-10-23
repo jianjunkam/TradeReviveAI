@@ -96,6 +96,7 @@ All settings come from `.env` (see `.env.example`). The ones that matter:
 | `APP_SECRET` | — | **Required.** Signs the session cookie and magic links. |
 | `ENVIRONMENT` | `production` | Only `development` relaxes cookies and enables `/docs`. Deliberately safe by default. |
 | `DEMO_CLOSED` | `false` | Set `true` to close the demo pages and serve the sign-in card. |
+| `DEEPSEEK_API_KEY` | — | Key for the journal's AI section. Empty → Flowise fallback → "no model configured". |
 | `REQUIRE_SIGN_IN` | `true` | Require the sign-in flow for `/app`. `false` removes the login page. |
 | `DEMO_SIGN_IN` | `true` | Show the "enter the demo account" button on the sign-in card. |
 | `PUBLIC_POSITIONS` | `false` | Include the broker account's open positions in the public API. |

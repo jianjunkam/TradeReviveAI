@@ -314,8 +314,54 @@
       .catch(function (e) { $("diagnosis-body").textContent = "Could not load the journal: " + e.message; });
   }
 
+  function renderAnalysis(data) {
+    var body = $("ai-body");
+    var meta = $("ai-meta");
+
+    if (!data.available) {
+      body.textContent = data.reason || "The model is not available right now.";
+      meta.hidden = true;
+      return;
+    }
+
+    body.textContent = data.text;
+    var parts = [data.provider];
+    if (data.model && data.model !== data.provider) parts.push(data.model);
+    if (data.latency_ms !== null && data.latency_ms !== undefined) parts.push(data.latency_ms + " ms");
+    parts.push(data.cached ? "cached reply" : "fresh call");
+    meta.hidden = false;
+    meta.textContent = parts.join(" · ");
+
+    // A model doing its own arithmetic is the failure mode this section must not hide.
+    if (data.unknown_figures && data.unknown_figures.length) {
+      meta.textContent += " · ⚠ quoted figures not in your data: " + data.unknown_figures.join(", ");
+      meta.style.color = "#b45309";
+    } else {
+      meta.style.color = "";
+    }
+  }
+
+  function runAnalysis() {
+    var button = $("ai-run");
+    button.disabled = true;
+    button.textContent = "Analysing…";
+    $("ai-body").textContent = "Asking the model…";
+
+    fetch("/api/journal/analysis", { method: "POST", headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(renderAnalysis)
+      .catch(function (e) {
+        $("ai-body").textContent = "The request failed: " + e.message;
+      })
+      .finally(function () {
+        button.disabled = false;
+        button.textContent = "Analyse my trades";
+      });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     $("journal-refresh").addEventListener("click", load);
+    $("ai-run").addEventListener("click", runAnalysis);
     $("cal-prev").addEventListener("click", function () { shiftMonth(-1); });
     $("cal-next").addEventListener("click", function () { shiftMonth(1); });
     load();

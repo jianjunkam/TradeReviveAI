@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Request
 
+from app.ai.analysis import analyse
 from app.paper import Fill
 from app.permissions import public
 
@@ -64,7 +65,11 @@ def _holding_days(fills: list[Fill]) -> dict[str, int]:
 def summary(request: Request) -> dict:
     if request.app.state.settings.demo_closed:
         raise HTTPException(status_code=404, detail="Not found.")
+    return summary_payload(request)
 
+
+def summary_payload(request: Request) -> dict:
+    """The figures without the gate, so /analysis sees exactly what the page displays."""
     account = request.app.state.paper.account()
     state = account.state(_marks(request))
     fills = sorted(account.fills, key=lambda f: f.at)
@@ -222,3 +227,20 @@ def summary(request: Request) -> dict:
         "verdict": verdict,
         "positions": state["positions"],
     }
+
+
+@router.post("/analysis")
+@public
+def analysis(request: Request) -> dict:
+    """One model call over the figures this journal already computed.
+
+    POST, not GET: it spends money. The journal page asks for it when the reader presses a
+    button, so a refresh does not bill anyone.
+    """
+    settings = request.app.state.settings
+    if settings.demo_closed:
+        raise HTTPException(status_code=404, detail="Not found.")
+
+    # Reuse the exact arithmetic the page shows, so the model cannot see different numbers.
+    figures = summary_payload(request)
+    return analyse(figures, settings).as_dict()

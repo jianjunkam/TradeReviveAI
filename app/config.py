@@ -50,6 +50,14 @@ class Settings(BaseSettings):
     #: Close the demo pages (market, journal, papertrade, diagnosis) and serve the sign-in
     #: card instead. Off by default, because a demo that nobody can open is not a demo.
     demo_closed: bool = False
+
+    #: AI features. The key lives only in .env on the server; the browser never sees it.
+    deepseek_api_key: SecretStr | None = None
+    ai_model: str = "deepseek-flash"
+    ai_base_url: str = "https://api.deepseek.com"
+    #: Fallback with no key: the Flowise chatflow already used by the Diagnosis page.
+    flowise_host: str = "flowise.bdctraining.cloud"
+    flowise_chatflow_id: str = "f2ac3baa-63d0-4ce2-ba69-07d8fa7b66c8"
     #: Retired: this used to gate the demo pages, and a stale `PUBLIC_DASHBOARD=false` in a
     #: deployed .env hid the entire product behind a login page whose email never arrives.
     #: Kept as a field so old configs load, never read as a gate. Use DEMO_CLOSED instead.
