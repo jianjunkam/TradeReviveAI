@@ -310,21 +310,22 @@
     }
 
     var ready = data.ready;
-    status.textContent = ready ? t("m_live") : t("m_warming");
-    status.style.background = ready ? "#ecfdf5" : "#f1f5f9";
-    status.style.color = ready ? "#047857" : "#475569";
+    var offline = !ready && !!data.error;
+    status.textContent = ready ? t("m_live") : offline ? t("m_offline") : t("m_warming");
+    status.style.background = ready ? "#ecfdf5" : offline ? "#fef2f2" : "#f1f5f9";
+    status.style.color = ready ? "#047857" : offline ? "#991b1b" : "#475569";
 
     if (!ready) {
       note.hidden = false;
       note.textContent = data.error || "The first sweep of the market is running — about 20 seconds.";
-      // Say it inside the chart card too, rather than leaving a blank box.
-      var distTitle = document.querySelector(".chart-box");
-      if (distTitle) distTitle.style.display = "none";
+      // No data means no chart: hide the card rather than showing an empty white box.
+      var moves = document.getElementById("moves-card");
+      if (moves) moves.style.display = "none";
       return;
     }
     note.hidden = true;
-    var box = document.querySelector(".chart-box");
-    if (box) box.style.display = "";
+    var movesCard = document.getElementById("moves-card");
+    if (movesCard) movesCard.style.display = "";
 
     var rows = data.rows || [];
     var b = data.breadth || {};
